@@ -6,12 +6,12 @@
  * The data is used to train a neural network (knowledge distillation).
  *
  * Usage:
- *   node mcts-generate.js [numGames] [mode] [simsPerTurn]
+ *   node mcts-generate.js [numGames] [mode] [simsPerTurn] [rolloutDepth]
  *
  * Examples:
- *   node mcts-generate.js 10 tournament 500   # 10 games, 500 sims/turn
- *   node mcts-generate.js 50 blitz 200        # 50 blitz games, 200 sims
- *   node mcts-generate.js                     # defaults: 20 tournament, 500 sims
+ *   node mcts-generate.js 5 tournament 200 5    # fast: 5 games, 200 sims, depth 5
+ *   node mcts-generate.js 10 tournament 500 20  # quality: 10 games, 500 sims, depth 20
+ *   node mcts-generate.js                       # defaults: 5 tournament, 200 sims, depth 5
  *
  * Output:
  *   training/data/mcts_nn_<timestamp>.jsonl - NN training data (features + visit distributions)
@@ -33,10 +33,10 @@ const {
 
 // Parse args
 const args = process.argv.slice(2);
-const NUM_GAMES = parseInt(args[0]) || 20;
+const NUM_GAMES = parseInt(args[0]) || 5;
 const MODE = args[1] || 'tournament';
-const SIMS_PER_TURN = parseInt(args[2]) || 500;
-const ROLLOUT_DEPTH = 20;
+const SIMS_PER_TURN = parseInt(args[2]) || 200;
+const ROLLOUT_DEPTH = parseInt(args[3]) || 5;
 
 // Opponents for MCTS to play against
 const OPPONENTS = [
