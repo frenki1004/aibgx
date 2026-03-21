@@ -15,10 +15,10 @@
 
 const { MCTSEngine } = require('./mctsEngine');
 
-const SIMS = parseInt(process.env.MCTS_SIMS) || 100;
-const TIME_MS = parseInt(process.env.MCTS_TIME_MS) || 250;
-const ROLLOUT_DEPTH = parseInt(process.env.MCTS_ROLLOUT) || 8;
-const FAST_MODE = process.env.MCTS_FAST === 'true';
+const SIMS = parseInt(process.env.MCTS_SIMS) || 200;
+const TIME_MS = parseInt(process.env.MCTS_TIME_MS) || 500;
+const ROLLOUT_DEPTH = parseInt(process.env.MCTS_ROLLOUT) || 4;
+const FAST_MODE = process.env.MCTS_FAST === 'true'; // Default: false (use rollout for better eval)
 
 const engine = new MCTSEngine({
   simulations: SIMS,
@@ -31,15 +31,13 @@ const engine = new MCTSEngine({
 function generateActions(state, playerId) {
   const result = engine.search(state, playerId);
 
-  // Log every 10 turns
-  if (state.turn % 10 === 1 || state.turn <= 3) {
-    const top3 = Object.entries(result.rootVisits)
-      .sort((a, b) => b[1].visits - a[1].visits)
-      .slice(0, 3)
-      .map(([name, d]) => `${name}(${d.visits})`)
-      .join(', ');
-    console.log(`  [MCTS] t${state.turn}: ${result.macroName} | ${result.totalSimulations} sims ${result.timeMs}ms | ${top3}`);
-  }
+  // Log every turn for debugging
+  const top3 = Object.entries(result.rootVisits)
+    .sort((a, b) => b[1].visits - a[1].visits)
+    .slice(0, 3)
+    .map(([name, d]) => `${name}(v=${d.visits},q=${d.value.toFixed(3)})`)
+    .join(', ');
+  console.log(`  [MCTS] t${state.turn}: ${result.macroName} (${result.actions.length} acts) | ${result.totalSimulations} sims ${result.timeMs}ms | ${top3}`);
 
   return result.actions;
 }

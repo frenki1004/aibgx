@@ -266,6 +266,7 @@ class MCTSEngine {
 
   /**
    * Evaluate a state heuristically (returns value in [0, 1])
+   * Weights are large enough that 1-turn differences are clearly visible to MCTS.
    */
   evaluateState(state, playerId) {
     const me = state.players.find(p => p.id === playerId);
@@ -275,46 +276,61 @@ class MCTSEngine {
       return this.evaluateTerminal(state, playerId);
     }
 
-    // Multi-factor evaluation
     let score = 0.5; // Start neutral
 
-    // Score advantage
+    // Score advantage (the actual win condition — heavily weighted)
     const scoreDiff = me.score - opp.score;
     const maxScore = Math.max(me.score + opp.score, 1);
-    score += 0.15 * (scoreDiff / maxScore);
+    score += 0.25 * Math.tanh(scoreDiff / Math.max(maxScore * 0.3, 1));
 
-    // Gold/income advantage
+    // Income advantage (compounds every turn — very important)
     const incomeDiff = me.income - opp.income;
-    score += 0.05 * Math.tanh(incomeDiff / 10);
+    score += 0.12 * Math.tanh(incomeDiff / 5);
 
-    // Territory advantage
+    // Territory advantage (drives income and city placement)
     const myTiles = state.map.tiles.filter(t => t.owner === playerId).length;
     const oppTiles = state.map.tiles.filter(t => t.owner !== null && t.owner !== playerId).length;
-    score += 0.05 * Math.tanh((myTiles - oppTiles) / 30);
+    const totalTiles = myTiles + oppTiles + 1;
+    score += 0.10 * (myTiles - oppTiles) / totalTiles;
 
-    // Unit advantage (weighted by type value)
+    // Unit advantage (army strength)
     const myUnits = state.units.filter(u => u.owner === playerId);
     const oppUnits = state.units.filter(u => u.owner !== playerId);
-    const unitValue = u => UNIT_STATS[u.type].cost * u.hp;
+    const unitValue = u => UNIT_STATS[u.type].cost * (u.hp || 1);
     const myArmyValue = myUnits.reduce((s, u) => s + unitValue(u), 0);
     const oppArmyValue = oppUnits.reduce((s, u) => s + unitValue(u), 0);
     const totalArmy = myArmyValue + oppArmyValue + 1;
-    score += 0.1 * (myArmyValue - oppArmyValue) / totalArmy;
+    score += 0.15 * (myArmyValue - oppArmyValue) / totalArmy;
 
-    // City advantage
+    // Unit count matters too (more units = more actions per turn)
+    score += 0.05 * Math.tanh((myUnits.length - oppUnits.length) / 3);
+
+    // City advantage (spawn points + income)
     const myCities = state.cities.filter(c => c.owner === playerId).length;
     const oppCities = state.cities.filter(c => c.owner !== null && c.owner !== playerId).length;
-    score += 0.05 * Math.tanh(myCities - oppCities);
+    score += 0.08 * Math.tanh(myCities - oppCities);
 
-    // Monument control
+    // Monument control (big late-game points)
     const monuments = state.monuments || [];
     const myMon = monuments.filter(m => m.controlledBy === playerId).length;
     const oppMon = monuments.filter(m => m.controlledBy !== null && m.controlledBy !== playerId).length;
     if (monuments.length > 0) {
-      score += 0.05 * (myMon - oppMon) / monuments.length;
+      score += 0.10 * (myMon - oppMon) / monuments.length;
     }
 
-    return Math.max(0, Math.min(1, score));
+    // Forward position bonus (units closer to enemy = more threatening)
+    if (myUnits.length > 0) {
+      const mapW = state.map.width;
+      const myCx = state.cities.filter(c => c.owner === playerId);
+      const enemySide = (myCx.length > 0 && myCx[0].x < mapW / 2) ? mapW - 1 : 0;
+      let myForward = 0, oppForward = 0;
+      for (const u of myUnits) myForward += (mapW - Math.abs(u.x - enemySide));
+      for (const u of oppUnits) oppForward += (mapW - Math.abs(u.x - (mapW - 1 - enemySide)));
+      const totalForward = myForward + oppForward + 1;
+      score += 0.05 * (myForward - oppForward) / totalForward;
+    }
+
+    return Math.max(0.01, Math.min(0.99, score));
   }
 
   /**

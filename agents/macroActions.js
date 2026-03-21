@@ -501,17 +501,28 @@ function generateMacroActions(state, playerId) {
     } catch (e) { /* skip broken */ }
   }
 
-  // --- Always available: smarterAgent baseline + pass ---
-  makeMacro('smart_baseline', buildNothing, expandNone, moveSmart);
-  macros.push({ name: 'pass', actions: [] });
+  // --- Always available: smarterAgent full baseline ---
+  try {
+    const smarterAgent = require('./smarterAgent');
+    const smartActions = smarterAgent.generateActions(state, playerId);
+    if (smartActions.length > 0) {
+      macros.push({ name: 'smart_baseline', actions: smartActions });
+    }
+  } catch (e) { /* skip */ }
 
   // --- Early game (0-25%): economy focus ---
   if (progress < 0.25) {
     makeMacro('econ_expand', buildNothing, expandAggressive, moveStay);
     if (canBuild && gold >= 20) makeMacro('soldier+expand', buildOneSoldier, expandModerate, moveStay);
+    if (canBuild && gold >= 20) makeMacro('soldiers+expand_def', buildSoldiers, expandDefensive, moveStay);
     if (gold >= getCityCost(state, playerId)) makeMacro('build_city+expand', buildCity, expandDefensive, moveStay);
     if (canBuild && gold >= 20) makeMacro('soldiers+push', buildSoldiers, expandModerate, hasUnits ? moveAllPush : moveStay);
     makeMacro('full_expand', buildNothing, expandAggressive, hasUnits ? moveAllPush : moveStay);
+    // Always try building units from turn 1 — never pass early game
+    if (canBuild) {
+      makeMacro('soldiers_only', buildSoldiers, expandNone, moveStay);
+      makeMacro('mixed_build', buildMixed, expandNone, hasUnits ? moveAllPush : moveStay);
+    }
   }
 
   // --- Mid game (25-65%): army building + movement ---
@@ -542,14 +553,28 @@ function generateMacroActions(state, playerId) {
     makeMacro('counter+expand+smart', buildCounterPick, expandModerate, moveSmart);
   }
 
+  // Filter out empty-action macros (MCTS should never choose "do nothing")
+  const nonEmpty = macros.filter(m => m.actions.length > 0);
+
   // Deduplicate by action content (different names can produce same actions)
   const seen = new Set();
   const deduped = [];
-  for (const m of macros) {
+  for (const m of nonEmpty) {
     const key = JSON.stringify(m.actions);
     if (!seen.has(key)) {
       seen.add(key);
       deduped.push(m);
+    }
+  }
+
+  // Fallback: if everything produced empty actions, use expand-only as minimum action
+  if (deduped.length === 0) {
+    const expandActions = expandAggressive(state, playerId);
+    if (expandActions.length > 0) {
+      deduped.push({ name: 'expand_fallback', actions: expandActions });
+    } else {
+      // True last resort: just pass
+      deduped.push({ name: 'pass', actions: [] });
     }
   }
 
