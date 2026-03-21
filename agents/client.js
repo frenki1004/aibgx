@@ -32,6 +32,9 @@ const AGENT_NAMES = {
   best7: 'Best7',
   best8: 'Best8',
   best9: 'Best9',
+  openai: 'OpenAI',
+  nn: 'NN',
+  mcts: 'MCTS',
   dumb: 'Dumb',
 };
 const playerName = args[2] || `${AGENT_NAMES[agentType] || 'Dumb'}Agent`;
@@ -78,6 +81,15 @@ try {
   } else if (agentType === 'best9') {
     agent = require('./best9');
     console.log('Loaded best9 agent strategy (lane commander+)');
+  } else if (agentType === 'openai') {
+    agent = require('./openaiAgent');
+    console.log('Loaded OpenAI agent strategy (API-powered)');
+  } else if (agentType === 'nn') {
+    agent = require('./nnAgent');
+    console.log('Loaded neural network agent (local inference)');
+  } else if (agentType === 'mcts') {
+    agent = require('./mctsAgent');
+    console.log('Loaded MCTS agent (tree search)');
   } else {
     agent = require('./dumbAgent');
     console.log('Loaded dumb agent strategy');
