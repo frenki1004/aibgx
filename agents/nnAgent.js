@@ -87,35 +87,39 @@ class SimpleNN {
     return best;
   }
 
-  forward(features) {
-    if (!this.loaded) return null;
+  layerNorm(x, weightKey, biasKey) {
+    const w = this.weights[weightKey];  // 1D array [dim]
+    const b = this.weights[biasKey];    // 1D array [dim]
+    const mean = x.reduce((a, v) => a + v, 0) / x.length;
+    const variance = x.reduce((s, v) => s + (v - mean) ** 2, 0) / x.length;
+    const std = Math.sqrt(variance + 1e-5);
+    return x.map((v, i) => ((v - mean) / std) * w[i] + b[i]);
+  }
 
-    // Backbone: 3 linear layers with ReLU
-    let x = features;
-    x = this.relu(this.linear(x, 'backbone.0.weight', 'backbone.0.bias'));
-    // Skip dropout (inference mode)
-    x = this.relu(this.linear(x, 'backbone.3.weight', 'backbone.3.bias'));
-    x = this.relu(this.linear(x, 'backbone.6.weight', 'backbone.6.bias'));
+  resBlock(x, prefix) {
+    const residual = x;
+    let out = this.linear(x, `${prefix}.fc1.weight`, `${prefix}.fc1.bias`);
+    out = this.layerNorm(out, `${prefix}.ln1.weight`, `${prefix}.ln1.bias`);
+    out = this.relu(out);
+    // dropout skipped at inference time
+    out = this.linear(out, `${prefix}.fc2.weight`, `${prefix}.fc2.bias`);
+    out = this.layerNorm(out, `${prefix}.ln2.weight`, `${prefix}.ln2.bias`);
+    return out.map((v, i) => Math.max(0, v + residual[i]));
+  }
 
-    const shared = x;
-
-    // Build head
+  _computeHeads(shared) {
     let build = this.relu(this.linear(shared, 'build_head.0.weight', 'build_head.0.bias'));
     build = this.linear(build, 'build_head.2.weight', 'build_head.2.bias');
 
-    // Move head
     let move = this.relu(this.linear(shared, 'move_head.0.weight', 'move_head.0.bias'));
     move = this.linear(move, 'move_head.2.weight', 'move_head.2.bias');
 
-    // Expand head
     let expand = this.relu(this.linear(shared, 'expand_head.0.weight', 'expand_head.0.bias'));
     expand = this.linear(expand, 'expand_head.2.weight', 'expand_head.2.bias');
 
-    // City head
     let city = this.relu(this.linear(shared, 'city_head.0.weight', 'city_head.0.bias'));
     city = this.linear(city, 'city_head.2.weight', 'city_head.2.bias');
 
-    // Value head (win probability) — may not exist in older models
     let value = 0.5;
     if (this.weights['value_head.0.weight']) {
       let v = this.relu(this.linear(shared, 'value_head.0.weight', 'value_head.0.bias'));
@@ -131,6 +135,30 @@ class SimpleNN {
       cityLogit: city[0],   // scalar
       value,                // win probability [0, 1]
     };
+  }
+
+  forward(features) {
+    if (!this.loaded) return null;
+
+    let shared;
+    const isNewArch = this.weights['input_proj.weight'] &&
+                      this.weights['res_blocks.0.fc1.weight'] &&
+                      this.weights['output_proj.weight'];
+
+    if (isNewArch) {
+      // Residual backbone: input_proj → ResBlock × 2 → output_proj
+      let x = this.relu(this.linear(features, 'input_proj.weight', 'input_proj.bias'));
+      x = this.resBlock(x, 'res_blocks.0');
+      x = this.resBlock(x, 'res_blocks.1');
+      shared = this.relu(this.linear(x, 'output_proj.weight', 'output_proj.bias'));
+    } else {
+      // Legacy backbone: 3 linear layers (backbone.0 / .3 / .6, dropout skipped)
+      let x = this.relu(this.linear(features, 'backbone.0.weight', 'backbone.0.bias'));
+      x = this.relu(this.linear(x, 'backbone.3.weight', 'backbone.3.bias'));
+      shared = this.relu(this.linear(x, 'backbone.6.weight', 'backbone.6.bias'));
+    }
+
+    return this._computeHeads(shared);
   }
 }
 

@@ -104,21 +104,31 @@ NUM_MOVE_OPTIONS = 9    # stay, N, NE, E, SE, S, SW, W, NW
 MAX_EXPAND = 16         # 0-15
 
 
+class ResBlock(nn.Module):
+    def __init__(self, dim: int):
+        super().__init__()
+        self.fc1 = nn.Linear(dim, dim)
+        self.ln1 = nn.LayerNorm(dim)
+        self.fc2 = nn.Linear(dim, dim)
+        self.ln2 = nn.LayerNorm(dim)
+        self.dropout = nn.Dropout(0.1)
+
+    def forward(self, x):
+        residual = x
+        x = torch.relu(self.ln1(self.fc1(x)))
+        x = self.dropout(x)
+        x = self.ln2(self.fc2(x))
+        return torch.relu(x + residual)
+
+
 class CivClashNet(nn.Module):
     def __init__(self, input_dim=290):
         super().__init__()
 
-        # Shared backbone
-        self.backbone = nn.Sequential(
-            nn.Linear(input_dim, 512),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-        )
+        # Residual backbone
+        self.input_proj = nn.Linear(input_dim, 256)
+        self.res_blocks = nn.ModuleList([ResBlock(256), ResBlock(256)])
+        self.output_proj = nn.Linear(256, 128)
 
         # Policy heads
         self.build_head = nn.Sequential(
@@ -155,7 +165,10 @@ class CivClashNet(nn.Module):
         )
 
     def forward(self, x):
-        shared = self.backbone(x)
+        x = torch.relu(self.input_proj(x))
+        for block in self.res_blocks:
+            x = block(x)
+        shared = torch.relu(self.output_proj(x))
 
         build_logits = self.build_head(shared).view(-1, MAX_CITIES, NUM_BUILD_OPTIONS)
         move_logits = self.move_head(shared).view(-1, MAX_UNITS, NUM_MOVE_OPTIONS)
