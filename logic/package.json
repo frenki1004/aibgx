@@ -1,0 +1,12 @@
+{
+  "name": "civilization-clash-logic",
+  "version": "1.0.0",
+  "description": "Standalone game logic for AIBG Civilization Clash",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:watch": "node --test --watch tests/*.test.js"
+  },
+  "author": "",
+  "license": "ISC"
+}

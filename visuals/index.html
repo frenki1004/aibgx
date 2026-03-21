@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Civilization Clash</title>
+    <link rel="stylesheet" href="css/tailwind.css" />
+    <script src="assets/icons/lucide.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 overflow-hidden">
+    <!-- Main Container -->
+    <div id="app" class="relative w-screen h-screen">
+      <!-- Canvas Container -->
+      <div id="canvas-container" class="absolute inset-0">
+        <canvas id="game-canvas"></canvas>
+      </div>
+
+      <!-- Player 0 Stats Panel (Top Left) -->
+      <div id="panel-player0" class="panel absolute top-4 left-4 w-64" data-minimized="false">
+        <div
+          class="panel-header flex items-center justify-between px-3 py-2 cursor-pointer"
+          onclick="togglePanel('panel-player0')"
+        >
+          <div class="flex items-center gap-2">
+            <span id="p0-name" class="font-semibold text-team0">Player 1</span>
+          </div>
+          <button class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded">
+            <i data-lucide="minus" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="panel-content px-3 pb-3">
+          <div class="grid grid-cols-3 gap-2 text-sm">
+            <div class="stat-item" title="Gold">
+              <i data-lucide="coins" class="w-4 h-4 text-yellow-500"></i>
+              <span id="p0-gold">-</span>
+            </div>
+            <div class="stat-item" title="Income">
+              <i data-lucide="trending-up" class="w-4 h-4 text-green-500"></i>
+              <span id="p0-income">-</span>
+            </div>
+            <div class="stat-item" title="Score">
+              <i data-lucide="star" class="w-4 h-4 text-amber-500"></i>
+              <span id="p0-score">-</span>
+            </div>
+            <div class="stat-item" title="Cities">
+              <i data-lucide="building-2" class="w-4 h-4 text-slate-500"></i>
+              <span id="p0-cities">-</span>
+            </div>
+            <div class="stat-item" title="Units">
+              <i data-lucide="swords" class="w-4 h-4 text-red-500"></i>
+              <span id="p0-units">-</span>
+            </div>
+            <div class="stat-item" title="Tiles">
+              <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i>
+              <span id="p0-tiles">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn Info Panel (Top Center) -->
+      <div id="panel-turn" class="panel absolute top-4 left-1/2 -translate-x-1/2">
+        <div class="flex items-center gap-3 px-4 py-2">
+          <!-- Prev turn (hidden when live) -->
+          <button
+            id="turn-prev"
+            class="control-btn w-7 h-7 hidden"
+            title="Previous turn"
+            onclick="Replay.prevTurn()"
+          >
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <div class="flex items-center gap-1">
+            <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+            <span>Turn </span>
+            <input
+              type="number"
+              id="turn-input"
+              class="input-field text-xs py-1 w-12 text-center hidden"
+              min="0"
+              value="0"
+              onchange="Replay.seekTurn(parseInt(this.value))"
+            />
+            <span id="turn-current">-</span>
+            <span>/</span>
+            <span id="turn-max">-</span>
+          </div>
+          <!-- Next turn (hidden when live) -->
+          <button
+            id="turn-next"
+            class="control-btn w-7 h-7 hidden"
+            title="Next turn"
+            onclick="Replay.nextTurn()"
+          >
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+          <div class="flex items-center gap-1 font-mono">
+            <i data-lucide="clock" class="w-4 h-4"></i>
+            <span id="timer">--:--</span>
+          </div>
+          <div class="h-4 w-px bg-slate-300 dark:bg-slate-600"></div>
+          <div class="flex items-center gap-1">
+            <i data-lucide="trophy" class="w-4 h-4 text-monument"></i>
+            <span id="monument-owner" class="text-slate-500">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player 1 Stats Panel (Top Right) -->
+      <div id="panel-player1" class="panel absolute top-4 right-4 w-64" data-minimized="false">
+        <div
+          class="panel-header flex items-center justify-between px-3 py-2 cursor-pointer"
+          onclick="togglePanel('panel-player1')"
+        >
+          <div class="flex items-center gap-2">
+            <span id="p1-name" class="font-semibold text-team1">Player 2</span>
+          </div>
+          <button class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded">
+            <i data-lucide="minus" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="panel-content px-3 pb-3">
+          <div class="grid grid-cols-3 gap-2 text-sm">
+            <div class="stat-item" title="Gold">
+              <i data-lucide="coins" class="w-4 h-4 text-yellow-500"></i>
+              <span id="p1-gold">-</span>
+            </div>
+            <div class="stat-item" title="Income">
+              <i data-lucide="trending-up" class="w-4 h-4 text-green-500"></i>
+              <span id="p1-income">-</span>
+            </div>
+            <div class="stat-item" title="Score">
+              <i data-lucide="star" class="w-4 h-4 text-amber-500"></i>
+              <span id="p1-score">-</span>
+            </div>
+            <div class="stat-item" title="Cities">
+              <i data-lucide="building-2" class="w-4 h-4 text-slate-500"></i>
+              <span id="p1-cities">-</span>
+            </div>
+            <div class="stat-item" title="Units">
+              <i data-lucide="swords" class="w-4 h-4 text-red-500"></i>
+              <span id="p1-units">-</span>
+            </div>
+            <div class="stat-item" title="Tiles">
+              <i data-lucide="map-pin" class="w-4 h-4 text-blue-500"></i>
+              <span id="p1-tiles">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Replay Bar (Bottom Center) -->
+      <div id="panel-replay" class="panel absolute bottom-4 left-1/2 -translate-x-1/2">
+        <div class="flex items-center gap-3 px-4 py-2">
+          <!-- Saved replays -->
+          <button
+            id="btn-replays"
+            class="control-btn w-8 h-8"
+            title="Saved Replays"
+            onclick="App.requestSavesList(); toggleModal('modal-replays')"
+          >
+            <i data-lucide="film" class="w-4 h-4"></i>
+          </button>
+          <div class="h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+          <!-- Game navigator -->
+          <button class="control-btn w-8 h-8" title="Previous game" onclick="Replay.prevGame()">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          <div class="flex items-center gap-1 text-sm font-mono">
+            <span class="text-slate-500 dark:text-slate-400">Game</span>
+            <input
+              type="number"
+              id="game-number-input"
+              class="input-field text-xs py-1 w-12 text-center"
+              min="1"
+              value="0"
+              onchange="Replay.goToGame(this.value)"
+            />
+            <span class="text-slate-500 dark:text-slate-400">/</span>
+            <span id="game-total" class="text-slate-500 dark:text-slate-400">0</span>
+          </div>
+          <button class="control-btn w-8 h-8" title="Next game" onclick="Replay.nextGame()">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+
+          <div class="h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+          <!-- Global slider with game-boundary dots -->
+          <div id="global-slider-container" class="relative flex items-center min-w-[200px]">
+            <input
+              type="range"
+              id="global-slider"
+              class="replay-slider flex-1"
+              min="0"
+              max="0"
+              value="0"
+              oninput="Replay.seekGlobal(parseInt(this.value))"
+            />
+            <div id="global-slider-dots"></div>
+          </div>
+
+          <div class="h-6 w-px bg-slate-300 dark:bg-slate-600"></div>
+
+          <!-- Play button with speed popup on hover -->
+          <div class="play-btn-wrapper">
+            <button id="btn-play" class="play-btn" onclick="Replay.togglePlay()">
+              <span id="play-btn-label">&#9654; 4x</span>
+            </button>
+            <div class="speed-popup">
+              <button class="speed-option speed-option-live" onclick="Replay.setSpeed('live')">
+                Live
+              </button>
+              <button class="speed-option" onclick="Replay.setSpeed(0.5)">0.5x</button>
+              <button class="speed-option" onclick="Replay.setSpeed(1)">1x</button>
+              <button class="speed-option" onclick="Replay.setSpeed(4)">4x</button>
+              <button class="speed-option" onclick="Replay.setSpeed(8)">8x</button>
+              <button class="speed-option" onclick="Replay.setSpeed(16)">16x</button>
+            </div>
+          </div>
+
+          <!-- Go Live -->
+          <button
+            id="btn-go-live"
+            class="control-btn w-8 h-8 btn-go-live hidden"
+            title="Go to live"
+            onclick="Replay.goToLive()"
+          >
+            <i data-lucide="radio" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Gameplay Drawer (Left edge, revealed on hover when connected) -->
+      <div id="panel-gameplay-wrapper">
+        <div id="gameplay-hover-trigger" onclick="Panels.pinGameplayPanel()"></div>
+        <div id="panel-gameplay" class="hidden">
+          <!-- Compact header: team + gold + countdown + close -->
+          <div class="flex items-center gap-2 px-3 py-2 border-b border-slate-700">
+            <span id="gp-team-name" class="font-semibold text-xs text-team0">Cyan</span>
+            <div class="flex items-center gap-1 text-xs" title="Projected gold">
+              <i data-lucide="coins" class="w-3 h-3 text-yellow-500"></i>
+              <span id="gp-gold" class="font-mono">0</span>
+            </div>
+            <span id="gp-countdown" class="text-xs font-mono text-slate-500 ml-auto"></span>
+            <button
+              class="p-0.5 hover:bg-white/10 rounded"
+              onclick="Panels.unpinGameplayPanel()"
+              title="Close"
+            >
+              <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+          </div>
+
+          <!-- Mode buttons -->
+          <div class="flex border-b border-slate-700">
+            <button
+              id="gp-select"
+              class="cmd-btn active flex-1 justify-center rounded-none"
+              title="Select (S)"
+              onclick="if(typeof ManualPlay!=='undefined') ManualPlay.setMode('select')"
+            >
+              <i data-lucide="mouse-pointer" class="w-3.5 h-3.5"></i>
+            </button>
+            <button
+              id="gp-expand"
+              class="cmd-btn flex-1 justify-center rounded-none"
+              title="Expand (E)"
+              onclick="if(typeof ManualPlay!=='undefined') ManualPlay.setMode('expand')"
+            >
+              <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button
+              id="gp-city"
+              class="cmd-btn flex-1 justify-center rounded-none rounded-r-md"
+              title="City (C)"
+              onclick="if(typeof ManualPlay!=='undefined') ManualPlay.setMode('build_city')"
+            >
+              <i data-lucide="landmark" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+
+          <!-- Queued actions (takes all remaining space) -->
+          <div class="flex-1 flex flex-col min-h-0 px-2 py-2">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-medium">Queued</span>
+              <span id="gp-action-count" class="text-xs text-slate-500">0</span>
+            </div>
+            <div id="gp-queue-list" class="flex-1 space-y-1 overflow-y-auto text-xs">
+              <div class="text-slate-500 italic text-xs">No actions queued</div>
+            </div>
+          </div>
+
+          <!-- Bottom: Clear / Submit -->
+          <div class="flex border-t border-slate-700">
+            <button
+              class="cmd-btn flex-1 justify-center rounded-none py-2"
+              onclick="if(typeof ManualPlay!=='undefined') ManualPlay.clearQueue()"
+            >
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+            <button
+              class="cmd-btn-primary cmd-btn flex-1 justify-center rounded-none py-2"
+              onclick="if(typeof ManualPlay!=='undefined') ManualPlay.submitActions()"
+            >
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span class="text-xs ml-1">Submit</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel System (two tabs: Manual Play + Oversight) -->
+      <div id="right-panel" class="slide-panel-right">
+        <!-- Tabs (stacked vertically on right edge) -->
+        <div class="slide-panel-tabs">
+          <div
+            id="tab-manual"
+            class="slide-panel-tab"
+            onclick="Panels.openRightPanel('manual')"
+            title="Manual Play"
+          >
+            <i data-lucide="gamepad-2" class="w-5 h-5"></i>
+          </div>
+          <div
+            id="tab-oversight"
+            class="slide-panel-tab tab-oversight"
+            onclick="Panels.openRightPanel('oversight')"
+            title="Oversight"
+          >
+            <i data-lucide="eye" class="w-5 h-5"></i>
+          </div>
+        </div>
+
+        <!-- Drawer content -->
+        <div class="slide-panel-content">
+          <!-- Manual Play content -->
+          <div id="panel-manual-content">
+            <div class="panel-header flex items-center justify-between px-3 py-2">
+              <span class="font-semibold">Manual Play</span>
+              <button
+                class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+                onclick="Panels.closeRightPanel()"
+              >
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Connection Section -->
+            <div id="manual-connect" class="px-3 pb-3 space-y-3">
+              <div class="text-sm text-slate-500 dark:text-slate-400">
+                Connect as a player to control a team manually.
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Team</label>
+                <select id="manual-team" class="input-field w-full text-sm">
+                  <option value="0">Cyan (Team 0)</option>
+                  <option value="1">White (Team 1)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Password</label>
+                <input
+                  type="password"
+                  id="manual-password"
+                  class="input-field w-full text-sm"
+                  placeholder="Enter team password"
+                />
+              </div>
+              <button
+                id="btn-manual-connect"
+                class="action-btn primary w-full justify-center"
+                onclick="App.connectAsPlayer()"
+              >
+                <i data-lucide="plug" class="w-4 h-4"></i>
+                <span>Connect as Player</span>
+              </button>
+            </div>
+
+            <!-- Connected Section (shown when connected as player) -->
+            <div id="manual-actions" class="px-3 pb-3 space-y-3 hidden">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-500 dark:text-slate-400">Connected as</span>
+                <span id="manual-team-name" class="font-semibold text-team0">Cyan</span>
+              </div>
+              <div class="text-xs text-slate-400 dark:text-slate-500">
+                Use the gameplay panel on the left to queue actions.
+              </div>
+              <button
+                class="action-btn w-full justify-center text-red-500 border-red-300"
+                onclick="App.disconnectPlayer()"
+              >
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span>Disconnect</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Oversight content -->
+          <div id="panel-oversight-content" class="hidden">
+            <div class="panel-header flex items-center justify-between px-3 py-2">
+              <span class="font-semibold">Oversight</span>
+              <button
+                class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+                onclick="Panels.closeRightPanel()"
+              >
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Oversight Connect Section -->
+            <div id="oversight-connect" class="px-3 pb-3 space-y-3">
+              <div class="text-sm text-slate-500 dark:text-slate-400">
+                Connect as oversight to review and modify bot actions.
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Password</label>
+                <input
+                  type="password"
+                  id="oversight-password"
+                  class="input-field w-full text-sm"
+                  placeholder="Oversight password"
+                  value="oversight"
+                />
+              </div>
+              <button
+                class="action-btn primary w-full justify-center"
+                onclick="App.connectAsOversight()"
+              >
+                <i data-lucide="eye" class="w-4 h-4"></i>
+                <span>Connect as Oversight</span>
+              </button>
+            </div>
+
+            <!-- Oversight Controls (shown when connected) -->
+            <div id="oversight-controls" class="px-3 pb-3 space-y-3 hidden">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-slate-500 dark:text-slate-400">Oversight Mode</span>
+                <span class="text-amber-500 font-semibold text-xs uppercase tracking-wider"
+                  >Active</span
+                >
+              </div>
+
+              <!-- Team Toggle -->
+              <div class="flex gap-2">
+                <button
+                  id="oversight-team-0"
+                  class="action-btn flex-1 justify-center oversight-team-active"
+                  onclick="if(typeof ManualPlay!=='undefined') ManualPlay.switchTeam(0)"
+                >
+                  <span class="text-xs font-bold">Cyan</span>
+                </button>
+                <button
+                  id="oversight-team-1"
+                  class="action-btn flex-1 justify-center"
+                  onclick="if(typeof ManualPlay!=='undefined') ManualPlay.switchTeam(1)"
+                >
+                  <span class="text-xs font-bold">White</span>
+                </button>
+              </div>
+
+              <!-- Auto-approve -->
+              <div class="border-t border-slate-200 dark:border-slate-700 pt-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-sm font-medium">Auto-approve</span>
+                  <span id="oversight-countdown" class="text-xs font-mono text-slate-500"></span>
+                </div>
+                <div class="flex gap-2">
+                  <button
+                    id="oversight-pause-btn"
+                    class="action-btn flex-1 justify-center"
+                    onclick="if(typeof Oversight!=='undefined') Oversight.togglePause()"
+                  >
+                    <i data-lucide="pause" class="w-4 h-4"></i>
+                    <span id="oversight-pause-label">Pause</span>
+                  </button>
+                  <button
+                    class="action-btn primary flex-1 justify-center"
+                    onclick="if(typeof Oversight!=='undefined') Oversight.approve()"
+                  >
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span>Approve</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Disconnect -->
+              <button
+                class="action-btn w-full justify-center text-red-500 border-red-300"
+                onclick="App.disconnectPlayer()"
+              >
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span>Disconnect</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspector Panel (Right Slide-in) -->
+      <div id="panel-inspector" class="panel absolute top-1/2 -translate-y-1/2 right-4 w-72 hidden">
+        <div class="panel-header flex items-center justify-between px-3 py-2">
+          <span class="font-semibold">Tile Details</span>
+          <button
+            class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+            onclick="closeInspector()"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="panel-content px-3 pb-3 space-y-3">
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Position</span>
+              <span id="inspect-pos">(5, 3)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Terrain</span>
+              <span id="inspect-terrain">Grass</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Owner</span>
+              <span id="inspect-owner" class="text-team0">Cyan</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Income</span>
+              <span id="inspect-income">+1/turn</span>
+            </div>
+          </div>
+
+          <div id="inspect-unit" class="border-t border-slate-200 dark:border-slate-700 pt-3">
+            <div class="text-xs uppercase text-slate-500 dark:text-slate-400 mb-2">Unit</div>
+            <div class="space-y-1 text-sm">
+              <div class="flex justify-between">
+                <span class="text-slate-500 dark:text-slate-400">Type</span>
+                <span id="inspect-unit-type">Soldier</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-500 dark:text-slate-400">HP</span>
+                <div class="flex items-center gap-2">
+                  <div class="hp-bar w-16">
+                    <div id="inspect-unit-hp-bar" class="hp-fill" style="width: 66%"></div>
+                  </div>
+                  <span id="inspect-unit-hp">2/3</span>
+                </div>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-500 dark:text-slate-400">Can Move</span>
+                <span id="inspect-unit-move">Yes</span>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-3">
+              <button class="action-btn flex-1 text-xs">
+                <i data-lucide="move" class="w-3 h-3"></i>
+                <span>Move</span>
+              </button>
+              <button class="action-btn flex-1 text-xs">
+                <i data-lucide="eye" class="w-3 h-3"></i>
+                <span>Range</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Server Panel (Bottom Right) -->
+      <div id="panel-server" class="panel absolute bottom-4 right-4 w-56">
+        <div class="px-3 py-2 space-y-2">
+          <!-- Connection status -->
+          <div class="flex items-center gap-2">
+            <span id="connection-status" class="connection-dot"></span>
+            <span id="connection-text" class="text-xs text-slate-500 dark:text-slate-400"
+              >Disconnected</span
+            >
+            <div class="h-3 w-px bg-slate-300 dark:bg-slate-600 ml-1"></div>
+            <span id="p0-connection-dot" class="connection-dot"></span>
+            <span class="text-xs text-team0 font-medium">P1</span>
+            <span id="p1-connection-dot" class="connection-dot"></span>
+            <span class="text-xs text-team1 font-medium">P2</span>
+            <button
+              id="btn-fog"
+              class="control-btn w-6 h-6 ml-auto"
+              title="Toggle Fog of War"
+              onclick="App.toggleFog()"
+            >
+              <i data-lucide="cloud" class="w-3 h-3"></i>
+            </button>
+            <button
+              id="btn-terminal"
+              class="control-btn w-6 h-6"
+              title="Terminal (T)"
+              onclick="toggleTerminal()"
+            >
+              <i data-lucide="terminal" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <!-- Actions row -->
+          <div class="flex gap-2">
+            <button
+              id="btn-pause"
+              class="action-btn flex-1 justify-center text-xs py-1"
+              onclick="App.togglePause()"
+            >
+              <i id="pause-icon" data-lucide="square" class="w-3 h-3"></i>
+              <span id="pause-label">Stop</span>
+            </button>
+            <button
+              class="action-btn flex-1 justify-center text-xs py-1"
+              onclick="toggleServerSettings()"
+            >
+              <i data-lucide="settings" class="w-3 h-3"></i>
+              <span>Settings</span>
+              <i id="settings-chevron" data-lucide="chevron-down" class="w-3 h-3"></i>
+            </button>
+          </div>
+          <!-- Collapsible settings -->
+          <div
+            id="server-settings"
+            class="hidden border-t border-slate-200 dark:border-slate-700 pt-2 space-y-2"
+          >
+            <div>
+              <label class="block text-xs font-medium mb-1">Server URL</label>
+              <div class="flex items-center gap-1">
+                <input
+                  type="text"
+                  id="server-url"
+                  class="input-field flex-1 text-xs"
+                  value="ws://localhost:8080"
+                  placeholder="ws://host:port"
+                  onkeydown="if(event.key==='Enter'){App.changeServerUrl(this.value)}"
+                />
+                <button
+                  class="control-btn w-6 h-6"
+                  title="Reconnect"
+                  onclick="App.changeServerUrl(document.getElementById('server-url').value)"
+                >
+                  <i data-lucide="plug" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">Game Mode</label>
+              <select id="setting-map-size" class="input-field w-full text-xs">
+                <option value="standard">Standard (25x15, 200t)</option>
+                <option value="blitz">Blitz (15x11, 50t)</option>
+                <option value="tournament">Tournament (25x23, 350t)</option>
+              </select>
+            </div>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-medium">Turn Timeout (ms)</label>
+                <label
+                  class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    id="setting-no-timeout"
+                    class="w-3 h-3"
+                    onchange="document.getElementById('setting-timeout').disabled = this.checked"
+                  />
+                  None
+                </label>
+              </div>
+              <input
+                type="number"
+                id="setting-timeout"
+                class="input-field w-full text-xs"
+                value="2000"
+                min="0"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">Oversight Timeout (ms)</label>
+              <input
+                type="number"
+                id="setting-oversight-timeout"
+                class="input-field w-full text-xs"
+                value="30000"
+                min="1000"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">Manual Auto-Submit (ms)</label>
+              <input
+                type="number"
+                id="setting-autosubmit-buffer"
+                class="input-field w-full text-xs"
+                value="500"
+                min="0"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1">Oversight Auto-Approve (ms)</label>
+              <input
+                type="number"
+                id="setting-oversight-approve"
+                class="input-field w-full text-xs"
+                value="500"
+                min="100"
+              />
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-medium">Fog of War</label>
+              <input type="checkbox" id="setting-fog" class="w-4 h-4" checked />
+            </div>
+            <button
+              class="action-btn primary w-full justify-center text-xs py-1"
+              onclick="App.applySettings()"
+            >
+              <i data-lucide="send" class="w-3 h-3"></i>
+              <span>Overwrite Settings</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal Overlay -->
+      <div id="terminal" class="panel absolute bottom-20 left-4 right-4 max-h-64 hidden">
+        <div class="panel-header flex items-center justify-between px-3 py-2">
+          <div class="flex items-center gap-2">
+            <i data-lucide="terminal" class="w-4 h-4"></i>
+            <span class="font-semibold">Server Messages</span>
+          </div>
+          <button
+            class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+            onclick="toggleTerminal()"
+          >
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div id="terminal-content" class="font-mono text-xs p-3 max-h-48 overflow-y-auto space-y-1">
+          <div class="text-slate-500">[14:32:15] Connected to ws://localhost:8080</div>
+          <div class="text-green-500">[14:32:16] AUTH_SUCCESS: spectator</div>
+          <div class="text-slate-400">[14:32:18] TURN_START: Turn 12, timeout 2000ms</div>
+          <div class="text-blue-500">[14:32:19] ACTIONS_RECEIVED: Team 0 - 3 actions</div>
+        </div>
+      </div>
+
+      <!-- Replays Modal -->
+      <div id="modal-replays" class="modal-overlay hidden">
+        <div class="modal">
+          <div class="modal-header">
+            <span class="font-semibold">Game Replays</span>
+            <button
+              class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+              onclick="toggleModal('modal-replays')"
+            >
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="modal-content">
+            <div id="replays-list" class="space-y-2 max-h-72 overflow-y-auto">
+              <div class="text-slate-400 text-sm italic">Loading...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Build Modal -->
+      <div id="modal-build" class="modal-overlay hidden">
+        <div class="modal">
+          <div class="modal-header">
+            <span class="font-semibold">Build Unit</span>
+            <button
+              class="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded"
+              onclick="toggleModal('modal-build')"
+            >
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+          <div class="modal-content">
+            <div class="grid grid-cols-3 gap-3 mb-4">
+              <button class="unit-card" data-unit="soldier">
+                <div class="unit-icon bg-team0/20 text-team0">S</div>
+                <div class="font-medium">Soldier</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">20 gold</div>
+              </button>
+              <button class="unit-card" data-unit="archer">
+                <div class="unit-icon bg-team0/20 text-team0">A</div>
+                <div class="font-medium">Archer</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">25 gold</div>
+              </button>
+              <button class="unit-card" data-unit="raider">
+                <div class="unit-icon bg-team0/20 text-team0">R</div>
+                <div class="font-medium">Raider</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400">15 gold</div>
+              </button>
+            </div>
+            <div class="mb-4">
+              <label class="block text-sm font-medium mb-1">Build at City</label>
+              <select id="build-city" class="input-field w-full">
+                <option value="0">Capital (3, 2)</option>
+                <option value="1">Outpost (7, 5)</option>
+              </select>
+            </div>
+            <button class="action-btn primary w-full justify-center" onclick="App.confirmBuild()">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              <span>Confirm Build</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inline Build Popup (positioned near clicked city) -->
+    <div id="inline-build-popup" class="panel absolute hidden" style="z-index: 200">
+      <div class="flex gap-2 p-2">
+        <button
+          class="inline-build-card"
+          onclick="if(typeof ManualPlay!=='undefined') ManualPlay.queueBuildUnit(null,null,'SOLDIER')"
+          title="Soldier (20g)"
+        >
+          <div class="inline-build-icon bg-blue-100 dark:bg-blue-900/30 text-team0">S</div>
+          <span class="text-xs">20g</span>
+        </button>
+        <button
+          class="inline-build-card"
+          onclick="if(typeof ManualPlay!=='undefined') ManualPlay.queueBuildUnit(null,null,'ARCHER')"
+          title="Archer (25g)"
+        >
+          <div class="inline-build-icon bg-blue-100 dark:bg-blue-900/30 text-team0">A</div>
+          <span class="text-xs">25g</span>
+        </button>
+        <button
+          class="inline-build-card"
+          onclick="if(typeof ManualPlay!=='undefined') ManualPlay.queueBuildUnit(null,null,'RAIDER')"
+          title="Raider (15g)"
+        >
+          <div class="inline-build-icon bg-blue-100 dark:bg-blue-900/30 text-team0">R</div>
+          <span class="text-xs">15g</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/canvas/isometric.js"></script>
+    <script src="js/canvas/tiles.js"></script>
+    <script src="js/canvas/units.js"></script>
+    <script src="js/canvas/renderer.js"></script>
+    <script src="js/ui/panels.js"></script>
+    <script src="js/game/pathfinding.js"></script>
+    <script src="js/game/manual-play.js"></script>
+    <script src="js/game/oversight.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Branding -->
+    <div id="branding" class="fixed bottom-4 left-4 z-10">
+      <div
+        class="select-none"
+        style="
+          font-family: 'Courier New', monospace;
+          font-weight: 700;
+          font-size: 18px;
+          letter-spacing: 0.15em;
+          color: #00bf9a;
+        "
+      >
+        AIBG <span style="color: #ffffff">X</span>
+      </div>
+      <div
+        class="select-none"
+        style="
+          font-family: 'Courier New', monospace;
+          font-size: 9px;
+          letter-spacing: 0.2em;
+          color: rgba(255, 255, 255, 0.35);
+          margin-top: 1px;
+        "
+      >
+        CIVILISATION CLASH
+      </div>
+      <a
+        href="/docs/index.html"
+        target="_blank"
+        rel="noopener"
+        style="
+          font-family: 'Courier New', monospace;
+          font-size: 9px;
+          letter-spacing: 0.15em;
+          color: rgba(0, 204, 170, 0.7);
+          text-decoration: none;
+          margin-top: 4px;
+          display: inline-block;
+        "
+        onmouseover="this.style.color='#00ccaa'"
+        onmouseout="this.style.color='rgba(0, 204, 170, 0.5)'"
+        >DOCS &#8599;</a
+      >
+    </div>
+  </body>
+</html>

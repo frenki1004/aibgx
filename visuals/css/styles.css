@@ -1,0 +1,1242 @@
+/* Civilization Clash - Custom Styles */
+
+:root {
+  /* Teams */
+  --team-0: #00ccaa;
+  --team-0-light: #33ddc0;
+  --team-0-bg: rgba(0, 204, 170, 0.15);
+
+  --team-1: #e0e0e0;
+  --team-1-light: #ffffff;
+  --team-1-bg: rgba(255, 255, 255, 0.12);
+
+  /* Terrain (spec: FIELD, MOUNTAIN, WATER, MONUMENT) */
+  --field: #90b060;
+  --mountain: #8b8b8b;
+  --water: #5b9bd5;
+  --monument: #ffd700;
+
+  /* UI */
+  --bg-light: #f5f5f7;
+  --bg-dark: #0a0a0a;
+  --card-light: rgba(255, 255, 255, 0.85);
+  --card-dark: rgba(18, 18, 18, 0.9);
+
+  /* Status */
+  --success: #34c759;
+  --warning: #ff9f0a;
+  --danger: #ff3b30;
+}
+
+/* Dark mode variables */
+[data-theme='dark'] {
+  --bg: var(--bg-dark);
+  --card-bg: var(--card-dark);
+  --text: #f5f5f7;
+  --text-muted: #8e8e93;
+  --border: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='light'] {
+  --bg: var(--bg-light);
+  --card-bg: var(--card-light);
+  --text: #1c1c1e;
+  --text-muted: #6e6e73;
+  --border: rgba(0, 0, 0, 0.1);
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Canvas container - full screen */
+#canvas-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Panel base styles - floating glassmorphism */
+.panel {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.panel:hover {
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.16),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Minimizable panels */
+.panel[data-minimized='true'] .panel-content {
+  display: none;
+}
+
+.panel[data-minimized='true'] {
+  width: auto !important;
+}
+
+.panel-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.panel[data-minimized='true'] .panel-header {
+  border-bottom: none;
+}
+
+/* Connection status dot */
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #8e8e93; /* Gray/disconnected */
+}
+
+.connection-dot.connected {
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+.connection-dot.connecting {
+  background: var(--warning);
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Stat items in player panels */
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .stat-item {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Control buttons */
+.control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] .control-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.control-btn.active {
+  background: var(--team-0);
+  color: white;
+}
+
+/* Action buttons */
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] .action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.action-btn.primary {
+  background: var(--team-0);
+  border-color: var(--team-0);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  background: var(--team-0-light);
+  border-color: var(--team-0-light);
+}
+
+/* Inspector panel - slide in from right */
+#panel-inspector {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+#panel-inspector.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+#panel-inspector.hidden {
+  display: block !important;
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* HP bar */
+.hp-bar {
+  height: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.hp-fill.low {
+  background: var(--warning);
+}
+
+.hp-fill.critical {
+  background: var(--danger);
+}
+
+/* Terminal overlay */
+#terminal {
+  background: rgba(0, 0, 0, 0.9);
+  color: #00ff00;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+#terminal .panel-header {
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+}
+
+#terminal-content {
+  background: transparent;
+}
+
+#terminal-content > div {
+  padding: 2px 0;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  min-width: 320px;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-content {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Input fields */
+.input-field {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+[data-theme='dark'] .input-field {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+select.input-field {
+  background-color: #121212;
+  color: #e2e8f0;
+}
+
+select.input-field option {
+  background-color: #121212;
+  color: #e2e8f0;
+}
+
+.input-field:focus {
+  border-color: var(--team-0);
+  box-shadow: 0 0 0 3px var(--team-0-bg);
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 2px;
+  bottom: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--team-0);
+}
+
+.toggle input:checked + .toggle-slider::before {
+  transform: translateX(20px);
+}
+
+/* Replay items */
+.replay-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.replay-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .replay-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.replay-item.active {
+  background: var(--team-0-bg);
+  border: 1px solid var(--team-0);
+}
+
+/* Unit cards in build modal */
+.unit-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unit-card:hover {
+  border-color: var(--team-0);
+  background: var(--team-0-bg);
+}
+
+.unit-card.selected {
+  border-color: var(--team-0);
+  background: var(--team-0-bg);
+}
+
+.unit-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Team colors for text */
+.text-team0 {
+  color: var(--team-0);
+}
+
+.text-team1 {
+  color: var(--team-1);
+}
+
+/* Animations */
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.unit-selected {
+  animation: bounce 0.6s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px var(--monument);
+  }
+  50% {
+    box-shadow:
+      0 0 20px var(--monument),
+      0 0 30px var(--monument);
+  }
+}
+
+.monument-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Turn timer warning */
+.timer-warning {
+  color: var(--warning);
+  animation: pulse 0.5s ease-in-out infinite;
+}
+
+.timer-critical {
+  color: var(--danger);
+  animation: pulse 0.3s ease-in-out infinite;
+}
+
+.timer-paused {
+  color: var(--warning);
+  font-style: italic;
+}
+
+.timer-no-timeout {
+  color: var(--text-muted);
+  font-size: 1.2em;
+}
+
+/* Valid move/attack indicators on hover */
+.tile-valid-move {
+  cursor: pointer;
+}
+
+.tile-valid-attack {
+  cursor: crosshair;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .panel {
+    transform: scale(0.9);
+  }
+
+  #panel-inspector {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 50vh;
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+  }
+
+  #panel-inspector.visible {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  #panel-player0,
+  #panel-player1 {
+    width: 180px;
+  }
+
+  #panel-actions {
+    left: 8px;
+    right: 8px;
+    transform: none;
+    width: auto;
+  }
+
+  .action-btn span {
+    display: none;
+  }
+
+  .action-btn {
+    padding: 8px;
+  }
+}
+
+/* Hide elements on touch devices */
+@media (hover: none) {
+  .control-btn:hover,
+  .action-btn:hover,
+  .replay-item:hover,
+  .unit-card:hover {
+    background: transparent;
+  }
+}
+
+/* Selection highlight for manual play mode */
+.manual-mode .panel-actions {
+  border-color: var(--team-0);
+  box-shadow: 0 0 0 2px var(--team-0-bg);
+}
+
+/* Loading state */
+.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tooltip styles */
+[title] {
+  position: relative;
+}
+
+/* ==========================================
+   Slide-out Panel (Right Edge)
+   ========================================== */
+
+.slide-panel-right {
+  position: fixed;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 150;
+}
+
+/* Stacked tabs container */
+.slide-panel-tabs {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slide-panel-tab {
+  width: 32px;
+  height: 48px;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-muted);
+}
+
+.slide-panel-tab:hover {
+  background: var(--team-0-bg);
+  color: var(--team-0);
+  width: 40px;
+}
+
+.slide-panel-tab.active {
+  background: var(--team-0);
+  color: white;
+  border-color: var(--team-0);
+}
+
+.slide-panel-tab.tab-oversight:hover {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.slide-panel-tab.tab-oversight.active {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.slide-panel-content {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) translateX(100%);
+  width: 280px;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 12px 0 0 12px;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+  transition: transform 0.3s ease;
+  overflow: hidden;
+}
+
+.slide-panel-right.open .slide-panel-tabs {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.slide-panel-right.open .slide-panel-content {
+  transform: translateY(-50%) translateX(0);
+}
+
+/* Move inspector left when manual panel is open */
+.slide-panel-right.open ~ #panel-inspector {
+  right: 300px;
+}
+
+/* ==========================================
+   Replay Bar
+   ========================================== */
+
+#panel-replay .control-btn {
+  width: 32px;
+  height: 32px;
+}
+
+/* Number inputs — hide spinner arrows */
+#game-number-input,
+#turn-input {
+  -moz-appearance: textfield;
+}
+#game-number-input::-webkit-inner-spin-button,
+#game-number-input::-webkit-outer-spin-button,
+#turn-input::-webkit-inner-spin-button,
+#turn-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Turn nav buttons in top bar */
+#panel-turn .control-btn {
+  width: 28px;
+  height: 28px;
+}
+
+/* Go-live button */
+.btn-go-live {
+  color: var(--success) !important;
+}
+.btn-go-live:hover {
+  background: rgba(52, 199, 89, 0.15) !important;
+}
+
+/* ==========================================
+   Global Slider + Game-boundary Dots
+   ========================================== */
+
+#global-slider-container {
+  position: relative;
+}
+
+.replay-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+[data-theme='dark'] .replay-slider {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.replay-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: var(--team-0);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  position: relative;
+  z-index: 2;
+}
+.replay-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--team-0-light);
+}
+
+.replay-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: var(--team-0);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  position: relative;
+  z-index: 2;
+}
+.replay-slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  background: var(--team-0-light);
+}
+
+#global-slider-dots {
+  position: absolute;
+  top: 0;
+  left: 7px; /* half of thumb width */
+  right: 7px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.slider-game-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  z-index: 1;
+}
+
+[data-theme='dark'] .slider-game-dot {
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+/* ==========================================
+   Play Button + Speed Popup
+   ========================================== */
+
+.play-btn-wrapper {
+  position: relative;
+}
+
+.play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.play-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+[data-theme='dark'] .play-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.speed-popup {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  z-index: 200;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.play-btn-wrapper:hover .speed-popup {
+  display: flex;
+}
+
+.speed-option {
+  padding: 5px 16px;
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--text);
+  white-space: nowrap;
+  font-family: inherit;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+.speed-option:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+[data-theme='dark'] .speed-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.speed-option.active {
+  background: var(--team-0);
+  color: white;
+}
+.speed-option.active:hover {
+  background: var(--team-0-light);
+}
+
+/* Live mode play button */
+.play-btn.play-btn-live {
+  color: var(--success);
+}
+.play-btn.play-btn-live:hover {
+  background: rgba(52, 199, 89, 0.15);
+}
+
+/* Live speed option */
+.speed-option-live {
+  color: var(--success);
+  font-weight: 600;
+}
+.speed-option-live.active {
+  background: var(--success);
+  color: white;
+}
+.speed-option-live.active:hover {
+  background: #2db84d;
+}
+
+/* ==========================================
+   Inspector adjustments
+   ========================================== */
+
+#panel-inspector {
+  right: 16px;
+  transition:
+    all 0.3s ease,
+    right 0.3s ease;
+}
+
+/* Adjust inspector when manual panel opens */
+body:has(.slide-panel-right.open) #panel-inspector.visible {
+  right: 300px;
+}
+
+/* ==========================================
+   Action Queue Items
+   ========================================== */
+
+.action-queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+[data-theme='dark'] .action-queue-item {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.action-queue-item .action-type {
+  font-weight: 500;
+  color: var(--active-team-color, var(--team-0));
+}
+
+.action-queue-item .action-remove {
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.action-queue-item .action-remove:hover {
+  color: var(--danger);
+  background: rgba(255, 59, 48, 0.1);
+}
+
+/* ==========================================
+   Server Panel (Bottom Right)
+   ========================================== */
+
+#panel-server .action-btn {
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+#panel-server .btn-paused {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+#panel-server .input-field {
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+/* ==========================================
+   Gameplay Drawer (Left Edge, hover-reveal)
+   ========================================== */
+
+#panel-gameplay-wrapper {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 120;
+  pointer-events: none;
+}
+
+#gameplay-hover-trigger {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  pointer-events: auto;
+}
+
+/* Visible indicator strip when gameplay panel is available */
+#panel-gameplay:not(.hidden) ~ #gameplay-hover-trigger,
+#gameplay-hover-trigger:has(~ #panel-gameplay:not(.hidden)) {
+  /* fallback: use wrapper-level styling instead */
+}
+
+#panel-gameplay-wrapper:has(#panel-gameplay:not(.hidden)) #gameplay-hover-trigger::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 72px;
+  border-radius: 0 4px 4px 0;
+  background: var(--indicator-color, var(--team-0));
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+#panel-gameplay-wrapper:has(#panel-gameplay.pinned) #gameplay-hover-trigger::after {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#panel-gameplay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 220px;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+  pointer-events: auto;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Click notch to open, click X to close */
+#panel-gameplay.pinned {
+  transform: translateX(0);
+}
+
+#panel-gameplay.hidden {
+  display: none;
+}
+
+/* Thin scrollbar for gameplay panel */
+#panel-gameplay,
+#gp-queue-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+#panel-gameplay::-webkit-scrollbar,
+#gp-queue-list::-webkit-scrollbar {
+  width: 4px;
+}
+#panel-gameplay::-webkit-scrollbar-track,
+#gp-queue-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+#panel-gameplay::-webkit-scrollbar-thumb,
+#gp-queue-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.cmd-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.cmd-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] .cmd-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cmd-btn.active {
+  background: var(--team-0);
+  color: white;
+  border-color: var(--team-0);
+}
+
+.cmd-btn.active:hover {
+  background: var(--team-0-light);
+}
+
+.cmd-btn-primary {
+  background: var(--team-0);
+  color: white !important;
+  border-color: var(--team-0);
+}
+
+.cmd-btn-primary:hover {
+  background: var(--team-0-light) !important;
+  border-color: var(--team-0-light);
+}
+
+/* ==========================================
+   Inline Build Popup
+   ========================================== */
+
+#inline-build-popup {
+  border-radius: 10px;
+  padding: 0;
+}
+
+.inline-build-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--text);
+}
+
+.inline-build-card:hover {
+  border-color: var(--team-0);
+  background: var(--team-0-bg);
+}
+
+.inline-build-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* ==========================================
+   Oversight Controls (Side Panel)
+   ========================================== */
+
+.oversight-team-active {
+  background: var(--team-0) !important;
+  border-color: var(--team-0) !important;
+  color: white !important;
+}
+
+#oversight-team-1.oversight-team-active {
+  background: var(--team-1) !important;
+  border-color: var(--team-1) !important;
+}
+
+.team-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.team-badge.team-0 {
+  background: rgba(0, 204, 170, 0.2);
+  color: var(--team-0);
+}
+
+.team-badge.team-1 {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--team-1);
+}
+
+/* ==========================================
+   Responsive: Replay Bar
+   ========================================== */
+
+@media (max-width: 900px) {
+  #panel-replay {
+    left: 8px;
+    right: 8px;
+    transform: none;
+  }
+
+  #panel-replay .flex {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .slide-panel-content {
+    width: 100vw;
+    border-radius: 0;
+  }
+
+  #panel-replay {
+    padding: 8px;
+  }
+
+  #panel-replay .control-btn {
+    width: 28px;
+    height: 28px;
+  }
+}

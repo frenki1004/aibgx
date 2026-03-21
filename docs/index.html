@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Civilisation Clash - Documentation</title>
+
+    <!-- Markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Code syntax highlighting -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js"></script>
+
+    <!-- Mermaid diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #16161a;
+        --bg-sidebar: #1c1c22;
+        --bg-card: #22222a;
+        --bg-hover: #2a2a34;
+        --text: #ececf1;
+        --text-muted: #aaaab8;
+        --text-dim: #80808e;
+        --accent: #44b8a8;
+        --accent-light: #70ccbe;
+        --accent-dim: rgba(68, 184, 168, 0.06);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-strong: rgba(255, 255, 255, 0.14);
+        --code-bg: #1a1a24;
+        --sidebar-width: 260px;
+        --content-max: 860px;
+      }
+
+      html {
+        font-size: 15px;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.75;
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* ─── Sidebar ─── */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: var(--sidebar-width);
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
+        overflow-y: auto;
+      }
+
+      .sidebar-header {
+        padding: 32px 24px 24px;
+      }
+
+      .logo-aibg {
+        font-family: 'Courier New', monospace;
+        font-weight: 700;
+        font-size: 18px;
+        letter-spacing: 0.15em;
+        color: #00bf9a;
+      }
+      .logo-x {
+        color: #ffffff;
+      }
+      .logo-sub {
+        display: block;
+        font-family: 'Courier New', monospace;
+        font-size: 9px;
+        letter-spacing: 0.2em;
+        color: rgba(255, 255, 255, 0.3);
+        margin-top: 2px;
+      }
+      .logo-docs {
+        display: block;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        color: var(--text-dim);
+        margin-top: 12px;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      .nav {
+        flex: 1;
+        padding: 8px 0 24px;
+      }
+      .nav-link {
+        display: block;
+        padding: 8px 24px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13.5px;
+        transition: all 0.15s;
+        border-left: 2px solid transparent;
+      }
+      .nav-link:hover {
+        color: var(--text);
+        background: var(--bg-hover);
+      }
+      .nav-link.active {
+        color: var(--accent);
+        background: var(--accent-dim);
+        border-left-color: var(--accent);
+        font-weight: 600;
+      }
+
+      /* ─── Mobile Sidebar ─── */
+      .sidebar-toggle {
+        display: none;
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        z-index: 200;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px;
+        cursor: pointer;
+        color: var(--text);
+      }
+      .sidebar-toggle svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+        fill: none;
+      }
+
+      .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 90;
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          transform: translateX(-100%);
+          transition: transform 0.25s ease;
+        }
+        .sidebar.open {
+          transform: translateX(0);
+        }
+        .sidebar-toggle {
+          display: block;
+        }
+        .sidebar-overlay.open {
+          display: block;
+        }
+        .content {
+          margin-left: 0 !important;
+        }
+      }
+
+      /* ─── Content ─── */
+      .content {
+        margin-left: var(--sidebar-width);
+        flex: 1;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        overflow-y: auto;
+      }
+
+      .article {
+        max-width: var(--content-max);
+        width: 100%;
+        padding: 56px 48px 100px;
+      }
+
+      @media (max-width: 768px) {
+        .article {
+          padding: 60px 20px 40px;
+        }
+      }
+
+      /* ─── Loading / Error ─── */
+      .loading,
+      .error {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--text-dim);
+        font-size: 14px;
+      }
+      .error {
+        color: #ff6b6b;
+      }
+
+      /* ─── Typography ─── */
+      .article h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 6px;
+        letter-spacing: -0.02em;
+      }
+      .article h1 + p {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        margin-bottom: 24px;
+      }
+
+      .article h2 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-top: 52px;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .article h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-top: 36px;
+        margin-bottom: 12px;
+      }
+
+      .article h4 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-top: 24px;
+        margin-bottom: 8px;
+      }
+
+      .article p {
+        margin-bottom: 16px;
+      }
+
+      .article a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.15s;
+      }
+      .article a:hover {
+        border-bottom-color: var(--accent);
+      }
+
+      .article ul,
+      .article ol {
+        margin-bottom: 16px;
+        padding-left: 24px;
+      }
+      .article li {
+        margin-bottom: 6px;
+      }
+      .article li > ul,
+      .article li > ol {
+        margin-top: 6px;
+        margin-bottom: 0;
+      }
+
+      .article strong {
+        color: #ffffff;
+        font-weight: 600;
+      }
+      .article em {
+        color: var(--text-muted);
+      }
+
+      .article hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 44px 0;
+      }
+
+      /* ─── Inline code ─── */
+      .article code {
+        font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        font-size: 0.87em;
+        background: var(--code-bg);
+        padding: 2px 7px;
+        border-radius: 4px;
+        color: #d0d0dc;
+      }
+
+      /* ─── Code blocks ─── */
+      .article pre {
+        margin-bottom: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        border: 1px solid var(--border-strong);
+      }
+      .article pre code {
+        display: block;
+        padding: 18px 20px;
+        background: var(--code-bg) !important;
+        font-size: 13px;
+        line-height: 1.65;
+        border-radius: 7px;
+        border: none;
+      }
+      .article pre code .hljs-keyword {
+        color: #c792ea;
+      }
+      .article pre code .hljs-string {
+        color: #c3e88d;
+      }
+      .article pre code .hljs-number {
+        color: #f78c6c;
+      }
+      .article pre code .hljs-built_in {
+        color: #82aaff;
+      }
+      .article pre code .hljs-function {
+        color: #82aaff;
+      }
+      .article pre code .hljs-title {
+        color: #82aaff;
+      }
+      .article pre code .hljs-params {
+        color: var(--text);
+      }
+      .article pre code .hljs-comment {
+        color: #6a6a80;
+        font-style: italic;
+      }
+      .article pre code .hljs-attr {
+        color: #ffcb6b;
+      }
+      .article pre code .hljs-literal,
+      .article pre code .hljs-built_in {
+        color: #f78c6c;
+      }
+      .article pre code .hljs-property {
+        color: #80cbc4;
+      }
+
+      /* ─── Tables ─── */
+      .article table {
+        width: 100%;
+        margin-bottom: 20px;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .article thead th {
+        text-align: left;
+        padding: 10px 14px;
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border-strong);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+      .article tbody td {
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .article tbody tr:nth-child(even) {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      /* ─── Blockquotes ─── */
+      .article blockquote {
+        border-left: 3px solid var(--accent);
+        padding: 14px 20px;
+        margin-bottom: 16px;
+        background: var(--accent-dim);
+        border-radius: 0 6px 6px 0;
+        color: var(--text-muted);
+      }
+      .article blockquote p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* ─── Table of Contents ─── */
+      .toc {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 16px 20px;
+        margin-bottom: 36px;
+      }
+      .toc-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-dim);
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .toc li {
+        margin-bottom: 3px;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 13px;
+        transition: color 0.15s;
+        border-bottom: none;
+      }
+      .toc a:hover {
+        color: var(--accent);
+        border-bottom: none;
+      }
+      .toc-h3 {
+        padding-left: 16px;
+      }
+
+      /* ─── GIF Placeholders ─── */
+      .gif-placeholder {
+        border: 1px dashed var(--border-strong);
+        border-radius: 8px;
+        padding: 28px 20px;
+        margin: 24px 0;
+        text-align: center;
+        background: var(--bg-card);
+      }
+      .gif-placeholder-icon {
+        font-size: 14px;
+        margin-bottom: 6px;
+        color: var(--text-dim);
+        font-family: 'Courier New', monospace;
+        letter-spacing: 0.1em;
+      }
+      .gif-placeholder-text {
+        font-size: 13px;
+        color: var(--text-muted);
+      }
+      .gif-placeholder-hint {
+        font-size: 11px;
+        color: var(--text-dim);
+        margin-top: 4px;
+      }
+
+      /* ─── Mermaid ─── */
+      .mermaid {
+        margin: 28px 0;
+        text-align: center;
+      }
+      .mermaid svg {
+        max-width: 100%;
+      }
+
+      /* ─── Print ─── */
+      @media print {
+        .sidebar,
+        .sidebar-toggle,
+        .sidebar-overlay {
+          display: none !important;
+        }
+        .content {
+          margin-left: 0 !important;
+        }
+        .article {
+          max-width: 100%;
+          padding: 20px;
+        }
+        .toc {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Mobile hamburger -->
+    <button id="sidebar-toggle" class="sidebar-toggle" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+
+    <!-- Mobile overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <div>
+          <span class="logo-aibg">AIBG <span class="logo-x">X</span></span>
+          <span class="logo-sub">CIVILISATION CLASH</span>
+        </div>
+        <span class="logo-docs">Documentation</span>
+      </div>
+      <nav id="nav" class="nav"></nav>
+    </aside>
+
+    <!-- Main content -->
+    <main id="content" class="content">
+      <article id="article" class="article">
+        <div class="loading">Loading...</div>
+      </article>
+    </main>
+
+    <script>
+      const PAGES = [
+        { id: 'quickstart', title: 'Quickstart', file: 'quickstart.md' },
+        { id: 'game-mechanics', title: 'Game Mechanics', file: 'game-mechanics.md' },
+        { id: 'building-a-client', title: 'Building a Client', file: 'building-a-client.md' },
+        { id: 'architecture', title: 'Repository Structure', file: 'architecture.md' },
+        { id: 'using-the-ui', title: 'Using the UI', file: 'using-the-ui.md' },
+        { id: 'server-reference', title: 'Server Reference', file: 'server-reference.md' },
+        { id: 'data-extraction', title: 'Data & Training', file: 'data-extraction.md' },
+      ];
+
+      let currentPage = null;
+
+      function buildNav() {
+        const nav = document.getElementById('nav');
+        let html = '';
+        for (const p of PAGES) {
+          html += `<a href="#${p.id}" class="nav-link" data-id="${p.id}">${p.title}</a>`;
+        }
+        nav.innerHTML = html;
+      }
+
+      function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebar-overlay').classList.toggle('open');
+      }
+      function closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('open');
+      }
+
+      async function loadPage(page) {
+        if (currentPage === page.id) return;
+        currentPage = page.id;
+
+        document.querySelectorAll('.nav-link').forEach((el) => {
+          el.classList.toggle('active', el.dataset.id === page.id);
+        });
+
+        const article = document.getElementById('article');
+        article.innerHTML = '<div class="loading">Loading...</div>';
+
+        try {
+          const res = await fetch(page.file);
+          if (!res.ok) throw new Error(`Failed to load ${page.file} (${res.status})`);
+          let md = await res.text();
+
+          md = md.replace(
+            /<div class="gif-placeholder" data-name="([^"]+)">([^<]*)<\/div>/g,
+            (_, name, desc) =>
+              `\n\n<div class="gif-placeholder"><div class="gif-placeholder-icon">[ GIF ]</div><div class="gif-placeholder-text">${desc || name}</div><div class="gif-placeholder-hint">Demo recording coming soon</div></div>\n\n`
+          );
+
+          marked.setOptions({ gfm: true, breaks: false });
+          article.innerHTML = marked.parse(md);
+
+          // Replace mermaid code blocks with diagram containers
+          const mermaidBlocks = article.querySelectorAll('pre code.language-mermaid');
+          mermaidBlocks.forEach((block) => {
+            const pre = block.parentElement;
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = block.textContent;
+            pre.replaceWith(div);
+          });
+          if (mermaidBlocks.length > 0) {
+            await mermaid.run({ nodes: article.querySelectorAll('.mermaid') });
+          }
+
+          // Apply syntax highlighting to all code blocks
+          article.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
+
+          buildToc(article);
+          document.getElementById('content').scrollTop = 0;
+          closeSidebar();
+        } catch (err) {
+          article.innerHTML = `<div class="error">Error: ${err.message}</div>`;
+        }
+      }
+
+      function buildToc(container) {
+        const headings = container.querySelectorAll('h2, h3');
+        if (headings.length < 3) return;
+
+        const toc = document.createElement('nav');
+        toc.className = 'toc';
+        toc.innerHTML = '<div class="toc-title">On this page</div>';
+
+        const ul = document.createElement('ul');
+        headings.forEach((h) => {
+          const id = h.textContent
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+          h.id = id;
+          const li = document.createElement('li');
+          li.className = h.tagName === 'H3' ? 'toc-h3' : 'toc-h2';
+          li.innerHTML = `<a href="#${id}">${h.textContent}</a>`;
+          ul.appendChild(li);
+        });
+        toc.appendChild(ul);
+
+        const h1 = container.querySelector('h1');
+        if (h1 && h1.nextSibling) {
+          h1.parentNode.insertBefore(toc, h1.nextSibling);
+        } else {
+          container.insertBefore(toc, container.firstChild);
+        }
+      }
+
+      function onHashChange() {
+        const hash = location.hash.slice(1) || PAGES[0].id;
+        const page = PAGES.find((p) => p.id === hash);
+        if (page) loadPage(page);
+      }
+
+      window.addEventListener('hashchange', onHashChange);
+      window.addEventListener('DOMContentLoaded', () => {
+        buildNav();
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          themeVariables: {
+            primaryColor: '#22222a',
+            primaryTextColor: '#ececf1',
+            primaryBorderColor: '#44b8a8',
+            lineColor: '#44b8a8',
+            secondaryColor: '#1c1c22',
+            tertiaryColor: '#16161a',
+          },
+        });
+        onHashChange();
+      });
+    </script>
+  </body>
+</html>

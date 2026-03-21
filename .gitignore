@@ -1,0 +1,20 @@
+node_modules/
+
+.venv
+.vscode
+.claude/
+.env
+
+_vibe_coding
+players.json
+server/saves/
+
+# Hidden from contestants
+agents/bestbot.js
+agents/best[0-9]*.js
+
+docs/unit-strategy-report.md
+
+# Simulation/test scripts (keep only logic.test.js)
+logic/tests/*
+!logic/tests/logic.test.js

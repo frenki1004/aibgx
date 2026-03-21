@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build output
+dist/
+build/
+
+# Package files
+package-lock.json
+*/package-lock.json
+
+# Test coverage
+coverage/
+
+# Git
+.git/
+
+# Claude folder (if you want to keep your docs as-is)
+claude/
+
+# Assets
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+
+# Minified files
+*.min.js
+*.min.css
