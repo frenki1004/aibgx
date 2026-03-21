@@ -1,0 +1,13 @@
+{
+  "w_forward": 10.17887386787091,
+  "w_enemy_city": 1.3467546625599283,
+  "w_enemy_unit": 5.591853632725772,
+  "w_monument": 0.0,
+  "w_raid_tile": 3.6341060369379186,
+  "w_city_capture": 256.7345266297033,
+  "max_cities": 10.65550806758381,
+  "soldiers_per_city": 1.190698159680254,
+  "archers_per_city": 3.291314651991711,
+  "raiders_per_city": 8.938219066562882,
+  "max_expands": 8.21524621300741
+}

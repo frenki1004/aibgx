@@ -1,0 +1,2702 @@
+[
+  {
+    "outcome": "win",
+    "score_delta": -33,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -467,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -99,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -215,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 18,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -12,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 30,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -173,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 92,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 80,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -69,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -154,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -81,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -140,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 230,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -58,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -116,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -67,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -143,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 6,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -184,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 154,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -42,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -200,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 36,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 175,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 95,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -317,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 37,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 59,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -102,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -114,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -224,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -221,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 150,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 90,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -66,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -282,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -140,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 2,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -33,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -22,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -82,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -140,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -120,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -10,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -35,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -151,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -77,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -46,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -468,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -165,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -129,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -124,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -8,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -66,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -132,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -17,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -461,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -106,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -214,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -55,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -152,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -34,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -32,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -37,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -58,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -230,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -140,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -162,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 136,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -103,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -3,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -160,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 55,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -144,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -98,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -144,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -1,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 204,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -42,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -35,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -331,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 3,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 52,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -102,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -129,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -43,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -14,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -19,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 142,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 72,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -221,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 151,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 280,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -203,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 124,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -244,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 171,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 191,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 10,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 123,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -20,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -237,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 102,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 115,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 50,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 24,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 38,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 21,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -65,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 83,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 4,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -16,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 12,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 31,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 18,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -139,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -36,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -2,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -177,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 54,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -327,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 263,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 31,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -8,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 113,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -30,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 100,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 91,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -173,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 99,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 156,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -309,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -116,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -133,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -142,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -53,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 31,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 44,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -56,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 67,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 7,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 115,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -87,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 54,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -1,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 29,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 103,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 60,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 38,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 33,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 58,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 43,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 279,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -37,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 176,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -48,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 192,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 157,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 22,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 308,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 3,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 121,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 86,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -33,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 160,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -44,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -297,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -152,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 16,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 82,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 67,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -7,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -135,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 70,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 101,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 78,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -37,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -187,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -6,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -24,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -37,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -23,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 42,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 39,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 140,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -48,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 70,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -288,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -204,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 148,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -236,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -304,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 72,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 52,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -68,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 118,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 15,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -239,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -48,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -12,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 45,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -26,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -198,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -31,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -243,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -84,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 24,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 142,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 220,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -44,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": -32,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -9,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 230,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 237,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 203,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 205,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 214,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 200,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 234,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 203,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 192,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 254,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 241,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 294,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 199,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -438,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 208,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 205,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 250,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 217,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 188,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 205,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 207,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 196,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 234,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 229,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 223,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 219,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 238,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 198,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 190,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 200,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 192,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 230,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 44,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 199,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 234,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 214,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 193,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 79,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 229,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 232,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 298,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 232,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 234,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 175,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 200,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 210,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 175,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 176,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 233,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 156,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 207,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 211,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 194,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 122,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 232,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 220,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 202,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 150,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 217,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 235,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 238,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 317,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 219,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 207,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 226,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 238,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 197,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 204,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 229,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 217,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 238,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 245,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 239,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 220,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 207,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 205,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 236,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 229,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 214,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 229,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 219,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 264,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 104,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 268,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 310,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 237,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 217,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 154,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 242,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 40,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 238,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 208,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 301,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 243,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 226,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 207,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 199,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 219,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 211,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 204,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 126,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 191,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 233,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 27,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 237,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 214,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 81,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 294,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 210,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 210,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 234,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 210,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 245,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 197,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 201,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 211,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 211,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 232,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 206,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 189,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 148,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 203,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 195,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 226,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 223,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -12,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 203,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 210,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 242,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 241,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 243,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 223,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 212,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 181,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 214,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 217,
+    "reason": "score"
+  },
+  {
+    "outcome": "loss",
+    "score_delta": -11,
+    "reason": "elimination"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 220,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 216,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 234,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 198,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 250,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 223,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 210,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 289,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 223,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 294,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 230,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 221,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 277,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 187,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 294,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 240,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 151,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 207,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 220,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 218,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 227,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 214,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 203,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 209,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 231,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 222,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 213,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 118,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 249,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 226,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 225,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 243,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 215,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 236,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 211,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 236,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 230,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 236,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 228,
+    "reason": "score"
+  },
+  {
+    "outcome": "win",
+    "score_delta": 224,
+    "reason": "score"
+  }
+]
