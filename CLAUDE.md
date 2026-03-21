@@ -17,7 +17,7 @@ Keep this file clean and useful. When updating:
 
 ## Current Focus
 
-Generating MCTS training data on Google Compute Engine (8-core VM `aibg-generator`), then training the NN locally with GPU.
+GCE VM is stopped. Need to start it, run data generation, copy data back, then train locally.
 
 ---
 
@@ -25,19 +25,30 @@ Generating MCTS training data on Google Compute Engine (8-core VM `aibg-generato
 
 ### AI Pipeline
 - [done] MCTS engine with macro-actions (`agents/mctsEngine.js`, `agents/macroActions.js`)
-- [done] MCTS data generator (`training/mcts-generate.js`)
-- [done] NN training script — PyTorch, residual backbone + LayerNorm (`training/train_nn.py`)
-- [done] NN agent — pure JS inference, no deps (`agents/nnAgent.js`)
+- [done] MCTS data generator — CLI args: `[numGames] [mode] [simsPerTurn] [rolloutDepth]` (`training/mcts-generate.js`)
+- [done] NN architecture — residual backbone + LayerNorm, 439K params (`training/train_nn.py`)
+- [done] NN agent — pure JS inference, dual-path (new/legacy weights) (`agents/nnAgent.js`)
 - [done] Self-play loop (`training/self-play-loop.js`)
-- [in progress] Data generation on GCE VM — 8 parallel generators running
+- [todo] Generate data on GCE VM and copy back locally
 - [todo] Train NN v1 once ~1000 examples collected
 - [todo] Evaluate NN agent vs smarterAgent
 - [todo] Self-play iteration loop (NN-guided MCTS → better data → better NN)
 
+### NN Architecture
+- Input: 290 features (global + per-unit + per-enemy + per-city)
+- Backbone: `input_proj(290→256)` → `ResBlock×2(256)` → `output_proj(256→128)`
+- Heads: build (6×4), move (20×9), expand (16), city (binary), value (win prob)
+- Python venv at `venv/` — always use `venv/bin/python` for training
+
 ### Infrastructure
-- [done] Python venv at `venv/` (use `venv/bin/python` for all Python commands)
-- [done] Google Cloud project `aibgx-training`, VM `aibg-generator` (europe-west1-b, 8 cores)
+- [done] Google Cloud project `aibgx-training`
+- [done] VM `aibg-generator` — europe-west1-b, n2-standard-8 (8 cores) — **currently STOPPED**
 - [todo] Automate: copy data from VM → train locally → push new weights
+
+### Data Generation Params (optimized)
+- Fast (recommended for NN v1): `5 tournament 200 5` — ~20-30 min, ~3,500 examples per run
+- Quality (for later iterations): `10 tournament 500 20` — ~5-7 hrs, ~7,000 examples per run
+- Run 8 in parallel on VM → multiply output by 8
 
 ### Agents available
 - `dumb` — random moves
