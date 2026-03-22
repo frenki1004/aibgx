@@ -23,6 +23,7 @@ const {
   UNIT_STATS,
   ECONOMY,
   TERRAIN,
+  DAMAGE_MULTIPLIERS,
   validateAction,
   getCityCost,
   getTilesAtDistance1,
@@ -247,11 +248,36 @@ function decodeActions(output, state, playerId) {
     }
   }
 
+  // --- Pre-compute city defense info ---
+  const enemySoldiers = state.units.filter((u) => u.owner !== playerId && u.type === 'SOLDIER');
+  const cityDefenseNeeded = new Map(); // cityKey → true if enemy soldier within 5
+  for (const c of myCities) {
+    const threatened = enemySoldiers.some((s) => chebyshevDistance(c.x, c.y, s.x, s.y) <= 5);
+    if (threatened) cityDefenseNeeded.set(`${c.x},${c.y}`, true);
+  }
+
   // --- Move units ---
   for (let i = 0; i < Math.min(MAX_UNITS, myUnits.length); i++) {
     const unit = myUnits[i];
     const canMove = (unit.canMove ?? unit.can_move_next_turn ?? true) && !isInZoC(state, unit);
     if (!canMove) continue;
+
+    // Safety: don't move last defender away from threatened city
+    if (unit.type === 'SOLDIER') {
+      for (const c of myCities) {
+        if (!cityDefenseNeeded.has(`${c.x},${c.y}`)) continue;
+        const dist = chebyshevDistance(unit.x, unit.y, c.x, c.y);
+        if (dist <= 2) {
+          // Check if we're the only defender
+          const otherDefenders = myUnits.filter(
+            (u) => u !== unit && u.type === 'SOLDIER' && chebyshevDistance(u.x, u.y, c.x, c.y) <= 2
+          );
+          if (otherDefenders.length === 0) {
+            continue; // skip moving this soldier — it's the last city defender
+          }
+        }
+      }
+    }
 
     const logitStart = i * NUM_MOVE_OPTIONS;
     const logits = output.moveLogits.slice(logitStart, logitStart + NUM_MOVE_OPTIONS);
@@ -267,6 +293,18 @@ function decodeActions(output, state, playerId) {
       if (dir.idx === 0) break; // stay = no move (only if still best after penalty)
 
       const [dx, dy] = DIR_MAP[dir.idx];
+
+      // Counter-awareness: penalize moving into a hard counter
+      const toX = unit.x + dx;
+      const toY = unit.y + dy;
+      const nearbyEnemy = state.units.find(
+        (u) => u.owner !== playerId && chebyshevDistance(toX, toY, u.x, u.y) <= 1
+      );
+      if (nearbyEnemy) {
+        const mult = DAMAGE_MULTIPLIERS[nearbyEnemy.type]?.[unit.type] || 1;
+        if (mult >= 2) continue; // skip: walking into a hard counter (instant death)
+      }
+
       const movement = UNIT_STATS[unit.type].movement;
 
       // For raiders (movement 2), try double step first

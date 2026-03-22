@@ -16,7 +16,7 @@ const {
 } = require('../logic');
 
 // ============================================================
-// Feature encoding: state → 290-dim feature vector
+// Feature encoding: state → 320-dim feature vector
 // ============================================================
 function encodeStateForNN(state, playerId) {
   const player = state.players.find((p) => p.id === playerId);
@@ -87,6 +87,29 @@ function encodeStateForNN(state, playerId) {
   const excess = Math.max(0, myUnits.length - myCities.length);
   const enemyExcess = Math.max(0, enemyUnits.length - enemyCities.length);
 
+  // Upkeep calculation (geometric: base * growth^i for each excess unit)
+  let upkeep = 0;
+  for (let i = 0; i < excess; i++) {
+    upkeep += (ECONOMY.UPKEEP_BASE || 1) * Math.pow(ECONOMY.UPKEEP_GROWTH || 1.5, i);
+  }
+
+  // City defense: how many cities have no friendly unit within distance 2
+  let undefendedCities = 0;
+  for (const c of myCities) {
+    const hasDefender = myUnits.some((u) => chebyshevDistance(u.x, u.y, c.x, c.y) <= 2);
+    if (!hasDefender) undefendedCities++;
+  }
+
+  // Capture threat: nearest enemy soldier to any of my cities
+  let minEnemySoldierToCity = W;
+  const enemySoldierList = enemyUnits.filter((u) => u.type === 'SOLDIER');
+  for (const c of myCities) {
+    for (const s of enemySoldierList) {
+      const d = chebyshevDistance(c.x, c.y, s.x, s.y);
+      if (d < minEnemySoldierToCity) minEnemySoldierToCity = d;
+    }
+  }
+
   const features = [
     state.turn / state.maxTurns,
     player.gold / 500,
@@ -120,6 +143,12 @@ function encodeStateForNN(state, playerId) {
     avgArmyDist / W,
     myDistToMonument / W,
     enemyDistToMonument / W,
+    // Economic sustainability
+    upkeep / Math.max(player.income, 1),
+    (player.income - upkeep) / 50,
+    // City defense awareness
+    undefendedCities / Math.max(myCities.length, 1),
+    minEnemySoldierToCity / W,
   ];
 
   const MAX_UNITS = 20;
@@ -146,17 +175,24 @@ function encodeStateForNN(state, playerId) {
         u.type === 'ARCHER' ? 1 : 0,
         u.type === 'RAIDER' ? 1 : 0,
         u.x / W,
-        u.y / H
+        u.y / H,
+        u.hp / 2
       );
-    } else features.push(0, 0, 0, 0, 0);
+    } else features.push(0, 0, 0, 0, 0, 0);
   }
 
   const MAX_CITIES = 6;
   for (let i = 0; i < MAX_CITIES; i++) {
     if (i < myCities.length) {
       const c = myCities[i];
-      features.push(c.x / W, c.y / H, !state.units.some((u) => u.x === c.x && u.y === c.y) ? 1 : 0);
-    } else features.push(0, 0, 0);
+      const defended = myUnits.some((u) => chebyshevDistance(u.x, u.y, c.x, c.y) <= 2) ? 1 : 0;
+      features.push(
+        c.x / W,
+        c.y / H,
+        !state.units.some((u) => u.x === c.x && u.y === c.y) ? 1 : 0,
+        defended
+      );
+    } else features.push(0, 0, 0, 0);
   }
 
   return features;
