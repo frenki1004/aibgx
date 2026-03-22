@@ -1,28 +1,35 @@
 """
-Improved Python bot with self-learning via weight evolution.
+Hybrid Python bot — balances economy, military pressure, and map control.
 
-How it learns:
-  - All scoring decisions are driven by a WEIGHTS dict
-  - After every game the result (win/loss/score) is written to learn_history.json
-  - Every EVAL_EVERY games the fitness (mean score_delta) is evaluated:
-      * If fitness improved → save as new best weights
-      * Mutate is always applied to the BEST weights seen so far (not the current
-        possibly-bad ones), so the search never drifts far from a known good config
-      * Mutation sigma scales with recent performance: losing badly → explore more
-      * Directional hints nudge weights toward fixing the diagnosed loss cause:
-          - Elimination losses  → more military, less gold buffer
-          - Score losses w/ few monuments → stronger monument weights
-          - Score losses w/ low territory → expand more
-  - In-game stats (monument control turns, peak territory, peak cities) are
-    recorded per game and used to diagnose loss causes at eval time
+Each turn the bot detects its current strategic mode and adapts:
+
+  DEFEND  — enemy soldier is close to one of our cities
+            → pull soldiers back, build defenders, protect at all cost
+
+  FINISH  — a soldier can step onto an enemy city this or next turn
+            → rush that city, ignore economy temporarily
+
+  PRESSURE — enemy has far fewer units than us
+            → push forward hard, take territory, threaten cities
+
+  CONTEST — default; fight for monuments and map control
+            → balanced army, hold monuments, stay forward
+
+  GREED   — we are safe and have enough gold / stable economy
+            → build next city, expand territory, reinvest income
+
+Unit roles are assigned each turn:
+  Soldiers  → defend threatened cities, capture enemy cities, ZoC pressure
+  Archers   → stay behind the soldier frontline, target enemy soldiers
+  Raiders   → avoid enemy soldiers, plunder deep territory, kill exposed archers
 
 Run:
-  python3 agents/python_example.py
+  python3 agents/hybrid_example.py
 
 Files written next to this script:
-  learn_weights.json      — current weights (being tested)
-  learn_best_weights.json — best weights found so far (always kept safe)
-  learn_history.json      — per-game results + stats log
+  hybrid_weights.json      — current weights (being tested)
+  hybrid_best_weights.json — best weights found so far (always kept safe)
+  hybrid_history.json      — per-game results + stats log
 """
 
 import asyncio, json, os, random, math
@@ -30,7 +37,7 @@ import asyncio, json, os, random, math
 SERVER_URL = os.environ.get("SERVER_URL", "ws://localhost:8080")
 PASSWORD   = os.environ.get("PASSWORD", "player")
 TEAM       = int(os.environ.get("TEAM", "0"))
-NAME       = os.environ.get("BOT_NAME", "PyBot")
+NAME       = os.environ.get("BOT_NAME", "HybridBot")
 OPPONENT   = os.environ.get("OPPONENT", "unknown")   # set by train.py on each rotation
 
 team_id = None
@@ -58,27 +65,35 @@ MUTATION_SIGMA  = 0.12   # std-dev of Gaussian weight perturbation (as fraction)
 HISTORY_WINDOW  = 20     # games to look back when evaluating win-rate
 
 SCRIPT_DIR           = os.path.dirname(os.path.abspath(__file__))
-WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "learn_weights.json")
-BEST_WEIGHTS_FILE    = os.path.join(SCRIPT_DIR, "learn_best_weights.json")
-HISTORY_FILE         = os.path.join(SCRIPT_DIR, "learn_history.json")
+WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "hybrid_weights.json")
+BEST_WEIGHTS_FILE    = os.path.join(SCRIPT_DIR, "hybrid_best_weights.json")
+HISTORY_FILE         = os.path.join(SCRIPT_DIR, "hybrid_history.json")
 
 DEFAULT_WEIGHTS = {
-    "w_forward":        8.0,   # reward for pushing toward enemy side
-    "w_enemy_city":    15.0,   # reward for soldiers approaching enemy city
-    "w_enemy_unit":     5.0,   # reward for approaching any enemy unit
-    "w_monument":       6.0,   # reward for approaching uncontrolled monument
-    "w_raid_tile":      8.0,   # bonus for stepping onto enemy territory
-    "w_city_capture": 100.0,   # bonus for soldiers stepping onto enemy city
-    "w_monument_guard":20.0,   # reward per step closer for monument guard units
-    "w_plunder":       10.0,   # reward per enemy tile in raider's 3x3 plunder area
-    "w_zoc_offense":    8.0,   # reward for soldiers moving within ZoC range of enemy archers/raiders
-    "w_archer_range":   6.0,   # reward for archers staying at fire range 2; penalty for range 1 (melee)
-    "max_cities":       4.0,   # build cities up to this count
-    "soldiers_per_city":2.0,   # target soldiers = this * num_cities
-    "archers_per_city": 1.0,   # target archers = ceil(this * num_cities); was 0.5 (never built with 1 city)
-    "raiders_per_city": 0.5,   # target raiders = ceil(this * num_cities); was 0.33
-    "max_expands":      5.0,   # max territory expansions per turn
-    "gold_buffer":     30.0,   # keep this much gold in reserve before building a city
+    # ── base movement scoring ──────────────────────────────────────────────
+    "w_forward":        6.0,   # moderate forward push (mode multipliers amplify this)
+    "w_enemy_city":    20.0,   # soldiers care strongly about approaching enemy cities
+    "w_enemy_unit":     5.0,   # engage enemies in range
+    "w_monument":       8.0,   # contest monuments actively
+    "w_raid_tile":      8.0,   # step onto enemy territory while passing
+    "w_city_capture": 100.0,   # always capture enemy cities if reachable
+    "w_monument_guard":20.0,   # hold monuments once we have them
+    "w_plunder":       12.0,   # raiders reward per enemy tile in 3x3 area
+    "w_zoc_offense":   10.0,   # pin enemy archers/raiders with soldiers
+    "w_archer_range":   8.0,   # archers sit at range 2, penalise range 1
+
+    # ── mode-specific multipliers (applied on top of base scoring) ─────────
+    "defend_pull":     20.0,   # how hard units pull toward threatened city in DEFEND
+    "pressure_push":   10.0,   # extra forward score per tile in PRESSURE / FINISH
+    "greed_expand":     6.0,   # extra expansion tiles scored in GREED
+
+    # ── building targets ───────────────────────────────────────────────────
+    "max_cities":       4.0,
+    "soldiers_per_city":2.0,
+    "archers_per_city": 1.0,
+    "raiders_per_city": 0.5,
+    "max_expands":      5.0,
+    "gold_buffer":     25.0,
 }
 
 # ── weight persistence ─────────────────────────────────────────────────────────
@@ -175,22 +190,25 @@ def win_rate(history: list, window: int) -> float:
 
 # Reasonable bounds for each weight — warn if evolution drifts outside these
 WEIGHT_SANITY = {
-    "w_forward":         (3,   20),
-    "w_enemy_city":      (8,   40),
-    "w_enemy_unit":      (1,   15),
-    "w_monument":        (2,   15),
-    "w_raid_tile":       (2,   20),
-    "w_city_capture":    (70, 150),   # must stay high — capturing cities is critical
-    "w_monument_guard":  (8,   40),
-    "w_plunder":         (2,   25),
-    "w_zoc_offense":     (2,   20),   # was drifting to 49 — cap tightened
-    "w_archer_range":    (2,   15),
+    "w_forward":         (3,   15),
+    "w_enemy_city":      (15,  40),
+    "w_enemy_unit":      (2,   15),
+    "w_monument":        (4,   20),
+    "w_raid_tile":       (3,   18),
+    "w_city_capture":    (90, 150),
+    "w_monument_guard":  (10,  30),
+    "w_plunder":         (4,   25),
+    "w_zoc_offense":     (4,   20),
+    "w_archer_range":    (3,   15),
+    "defend_pull":       (10,  35),
+    "pressure_push":     (5,   20),
+    "greed_expand":      (2,   15),
     "max_cities":        (2,    6),
-    "soldiers_per_city": (1,    4),
+    "soldiers_per_city": (1,    3),
     "archers_per_city":  (0.5,  2),
-    "raiders_per_city":  (0,  1.5),
+    "raiders_per_city":  (0.3,  1.5),
     "max_expands":       (3,   12),
-    "gold_buffer":       (22,  50),   # must stay positive — 0 causes bankruptcy
+    "gold_buffer":       (22,  50),
 }
 
 
@@ -364,11 +382,37 @@ def in_zoc(unit, enemy_soldiers):
     return False
 
 
-def counter_build_priority(enemy_units: list) -> list:
-    counts = {"SOLDIER": 0, "ARCHER": 0, "RAIDER": 0}
+# Tracks enemy unit type sightings across all turns this game.
+# Uses exponential decay so recent observations matter more than early ones.
+_enemy_composition = {"SOLDIER": 0.0, "ARCHER": 0.0, "RAIDER": 0.0}
+_COMPOSITION_DECAY = 0.92   # older turns fade to 92% weight each turn
+
+
+def update_enemy_composition(enemy_units: list):
+    """Decay existing counts and add current visible enemies."""
+    for k in _enemy_composition:
+        _enemy_composition[k] *= _COMPOSITION_DECAY
     for u in enemy_units:
-        counts[u["type"]] = counts.get(u["type"], 0) + 1
-    sorted_enemy = sorted(counts, key=lambda t: counts[t], reverse=True)
+        t = u.get("type")
+        if t in _enemy_composition:
+            _enemy_composition[t] += 1.0
+
+
+def counter_build_priority(enemy_units: list) -> list:
+    # Blend current visible units (weight 2x) with accumulated history (weight 1x)
+    # so fog-of-war gaps don't erase what we've already learned about the opponent
+    blended = {
+        "SOLDIER": _enemy_composition["SOLDIER"] + 2 * sum(1 for u in enemy_units if u["type"] == "SOLDIER"),
+        "ARCHER":  _enemy_composition["ARCHER"]  + 2 * sum(1 for u in enemy_units if u["type"] == "ARCHER"),
+        "RAIDER":  _enemy_composition["RAIDER"]  + 2 * sum(1 for u in enemy_units if u["type"] == "RAIDER"),
+    }
+    dominant = max(blended, key=blended.get)
+    if blended[dominant] > 0:
+        print(f"[bot] Enemy composition: "
+              f"soldiers={blended['SOLDIER']:.0f} "
+              f"archers={blended['ARCHER']:.0f} "
+              f"raiders={blended['RAIDER']:.0f} → counter={COUNTER[dominant]}")
+    sorted_enemy = sorted(blended, key=lambda t: blended[t], reverse=True)
     priority = [COUNTER[t] for t in sorted_enemy]
     seen, result = set(), []
     for t in priority:
@@ -461,6 +505,177 @@ def assign_monument_guards(state, my_team, my_units) -> dict:
     return assignments
 
 
+# ── strategic mode detection ──────────────────────────────────────────────────
+
+def detect_mode(state, my_team, gold, turn=0):
+    """
+    Determine the strategic mode for this turn.
+    Returns one of: DEFEND, FINISH, PRESSURE, GREED, CONTEST, TURTLE, ALLOUT
+    """
+    my_cities    = [c for c in state["cities"] if c["owner"] == my_team]
+    enemy_cities = [c for c in state["cities"] if c["owner"] != my_team]
+    my_units     = [u for u in state["units"] if u["owner"] == my_team]
+    enemy_units  = [u for u in state["units"] if u["owner"] != my_team]
+    my_soldiers  = [u for u in my_units  if u["type"] == "SOLDIER"]
+    enemy_soldiers = [u for u in enemy_units if u["type"] == "SOLDIER"]
+
+    # Score delta for endgame awareness
+    players = state.get("players", [])
+    me  = next((p for p in players if p["id"] == my_team), None)
+    opp = next((p for p in players if p["id"] != my_team), None)
+    score_delta = (me["score"] - opp["score"]) if me and opp else 0
+
+    # TURTLE: late game and winning comfortably — hold what we have
+    if turn >= 300 and score_delta >= 3000:
+        return "TURTLE"
+
+    # ALLOUT: late game and losing — ignore economy, rush everything
+    if turn >= 280 and score_delta <= -2000:
+        return "ALLOUT"
+
+    # DEFEND: any enemy soldier/raider within 4 tiles of one of our cities
+    enemy_raiders = [u for u in enemy_units if u["type"] == "RAIDER"]
+    for city in my_cities:
+        for sol in enemy_soldiers:
+            if chebyshev(city["x"], city["y"], sol["x"], sol["y"]) <= 4:
+                return "DEFEND"
+        for raider in enemy_raiders:
+            if chebyshev(city["x"], city["y"], raider["x"], raider["y"]) <= 3:
+                return "DEFEND"
+
+    # FINISH: one of our soldiers is adjacent to an enemy city (can capture next turn)
+    for sol in my_soldiers:
+        for city in enemy_cities:
+            if chebyshev(sol["x"], sol["y"], city["x"], city["y"]) <= 1:
+                return "FINISH"
+
+    # DISRUPT: enemy has more cities than us — attack their economy before it snowballs
+    # This counters econ-style bots that expand fast and overwhelm later
+    if len(enemy_cities) > len(my_cities) + 1:
+        return "PRESSURE"
+
+    # DISRUPT: enemy controls significantly more territory — push back now
+    my_tiles    = sum(1 for t in state["map"]["tiles"] if t.get("owner") == my_team)
+    enemy_tiles = sum(1 for t in state["map"]["tiles"] if t.get("owner") != my_team
+                      and t.get("owner") is not None)
+    if enemy_tiles > my_tiles * 1.6 and turn < 250:
+        return "PRESSURE"
+
+    # Score-aware: winning big → expand economy
+    if score_delta >= 5000 and not enemy_soldiers:
+        return "GREED"
+
+    # Score-aware: losing → apply more pressure
+    if score_delta <= -3000 and len(my_units) > 0:
+        return "PRESSURE"
+
+    # PRESSURE: we have significantly more units than the enemy
+    if len(enemy_units) > 0 and len(my_units) >= len(enemy_units) * 1.5:
+        return "PRESSURE"
+
+    # GREED: safe (no nearby threats), have enough gold for a city, below city cap
+    city_cost = round(80 * (1.5 ** max(0, len(my_cities) - 1)))
+    w = weights
+    if (gold >= city_cost + w["gold_buffer"] and
+            len(my_cities) < int(w["max_cities"]) and
+            not enemy_soldiers and not enemy_raiders):
+        return "GREED"
+
+    return "CONTEST"
+
+
+def assign_unit_roles(state, my_team, mode):
+    """
+    Assign a role to each friendly unit based on mode and game state.
+    Returns dict: (unit_x, unit_y) -> role string
+
+    Roles:
+      "defend"   — soldier recalled to protect a threatened city
+      "finish"   — soldier rushing a capturable enemy city
+      "monument" — unit assigned to guard/contest a monument
+      "attack"   — soldier pushing toward enemy
+      "support"  — archer staying behind the frontline
+      "raid"     — raider going deep for plunder
+    """
+    my_units     = [u for u in state["units"] if u["owner"] == my_team]
+    my_cities    = [c for c in state["cities"] if c["owner"] == my_team]
+    enemy_cities = [c for c in state["cities"] if c["owner"] != my_team]
+    enemy_soldiers = [(u["x"], u["y"]) for u in state["units"]
+                      if u["owner"] != my_team and u["type"] == "SOLDIER"]
+    monuments    = state.get("monuments", [])
+
+    roles    = {}
+    assigned = set()
+
+    # TURTLE: all units defend their nearest city
+    if mode == "TURTLE":
+        for unit in my_units:
+            roles[(unit["x"], unit["y"])] = "defend"
+        return roles
+
+    # ALLOUT: all soldiers rush enemy cities, archers support, raiders raid
+    if mode == "ALLOUT":
+        for unit in my_units:
+            if unit["type"] == "SOLDIER":
+                roles[(unit["x"], unit["y"])] = "finish"
+            elif unit["type"] == "ARCHER":
+                roles[(unit["x"], unit["y"])] = "support"
+            else:
+                roles[(unit["x"], unit["y"])] = "raid"
+        return roles
+
+    # 1. DEFEND: assign closest soldier to each threatened city
+    if mode == "DEFEND":
+        for city in my_cities:
+            threatened = any(chebyshev(city["x"], city["y"], sx, sy) <= 4
+                             for sx, sy in enemy_soldiers)
+            if not threatened:
+                continue
+            candidates = [u for u in my_units
+                          if u["type"] == "SOLDIER" and (u["x"], u["y"]) not in assigned]
+            if candidates:
+                closest = min(candidates, key=lambda u: chebyshev(u["x"], u["y"], city["x"], city["y"]))
+                roles[(closest["x"], closest["y"])] = "defend"
+                assigned.add((closest["x"], closest["y"]))
+
+    # 2. FINISH: assign soldiers that are adjacent to enemy cities
+    if mode == "FINISH":
+        for city in enemy_cities:
+            candidates = [u for u in my_units
+                          if u["type"] == "SOLDIER"
+                          and (u["x"], u["y"]) not in assigned
+                          and chebyshev(u["x"], u["y"], city["x"], city["y"]) <= 2]
+            if candidates:
+                closest = min(candidates, key=lambda u: chebyshev(u["x"], u["y"], city["x"], city["y"]))
+                roles[(closest["x"], closest["y"])] = "finish"
+                assigned.add((closest["x"], closest["y"]))
+
+    # 3. MONUMENT: assign one unit per uncontrolled monument (reuse assign_monument_guards logic)
+    for mon in sorted(monuments, key=lambda m: 0 if m.get("controlledBy") != my_team else 1):
+        available = [u for u in my_units if (u["x"], u["y"]) not in assigned]
+        if not available:
+            break
+        closest = min(available, key=lambda u: chebyshev(u["x"], u["y"], mon["x"], mon["y"]))
+        roles[(closest["x"], closest["y"])] = "monument"
+        assigned.add((closest["x"], closest["y"]))
+
+    # 4. Remaining units get default roles by type
+    for unit in my_units:
+        pos = (unit["x"], unit["y"])
+        if pos in roles:
+            continue
+        if unit["type"] == "SOLDIER":
+            roles[pos] = "attack"
+        elif unit["type"] == "ARCHER":
+            roles[pos] = "support"
+        else:
+            roles[pos] = "raid"
+
+    return roles
+
+
+# ── movement scoring ───────────────────────────────────────────────────────────
+
 def bfs_distances(tile_lut, W, H, targets):
     """
     BFS from all target positions across walkable (FIELD) tiles.
@@ -488,10 +703,9 @@ def bfs_distances(tile_lut, W, H, targets):
                 queue.append((nx, ny))
     return dist
 
-# ── movement scoring ───────────────────────────────────────────────────────────
 
 def best_move(unit, state, my_team, unit_positions, ex, W, danger: float = 0.0,
-              monument_target=None):
+              monument_target=None, mode="CONTEST", role="attack"):
     """
     Score every reachable tile and return the best (tx, ty), or None.
 
@@ -511,16 +725,16 @@ def best_move(unit, state, my_team, unit_positions, ex, W, danger: float = 0.0,
                     if m.get("controlledBy") != my_team]
     enemy_city_set = set(enemy_cities)
 
+    lethal_enemy_pos = [
+        (u["x"], u["y"]) for u in state["units"]
+        if u["owner"] != my_team and u["type"] in LETHAL_THREATS[unit["type"]]
+    ]
+
     # BFS distance maps — aware of water/obstacles, prevents units getting stuck
     ec_dist  = bfs_distances(tile_lut, W, H, enemy_cities) if enemy_cities else {}
     eu_dist  = bfs_distances(tile_lut, W, H, enemy_units)  if enemy_units  else {}
     mon_dist = bfs_distances(tile_lut, W, H, monuments)    if monuments    else {}
     oc_dist  = bfs_distances(tile_lut, W, H, own_cities)   if own_cities   else {}
-
-    lethal_enemy_pos = [
-        (u["x"], u["y"]) for u in state["units"]
-        if u["owner"] != my_team and u["type"] in LETHAL_THREATS[unit["type"]]
-    ]
 
     w = weights
     retreating = danger >= 1.5
@@ -638,6 +852,53 @@ def best_move(unit, state, my_team, unit_positions, ex, W, danger: float = 0.0,
                     elif min_dist == 2:
                         score += w["w_archer_range"]   # optimal fire position
 
+                # ── role & mode overlays ────────────────────────────────
+                # DEFEND role: pull unit back toward nearest own city
+                if role == "defend" and own_cities:
+                    od = oc_dist.get((ux, uy), 999)
+                    nd = oc_dist.get((tx, ty), 999)
+                    score += (od - nd) * w["defend_pull"]
+
+                # FINISH role: soldier rushes the nearest capturable enemy city
+                if role == "finish" and enemy_cities:
+                    od = ec_dist.get((ux, uy), 999)
+                    nd = ec_dist.get((tx, ty), 999)
+                    score += (od - nd) * w["pressure_push"] * 2.0
+
+                # PRESSURE / CONTEST: stronger forward push
+                if mode in ("PRESSURE", "FINISH") and role == "attack":
+                    score += (abs(ux - ex) - abs(tx - ex)) * w["pressure_push"]
+
+                # SUPPORT role (archers): stay behind the soldier frontline
+                if role == "support":
+                    my_soldiers = [(u["x"], u["y"]) for u in state["units"]
+                                   if u["owner"] == my_team and u["type"] == "SOLDIER"]
+                    if my_soldiers:
+                        # frontline = farthest allied soldier toward enemy side
+                        if ex == W - 1:
+                            frontline_x = max(sx for sx, sy in my_soldiers)
+                            if tx > frontline_x + 1:
+                                score -= 20.0   # don't advance past soldiers
+                        else:
+                            frontline_x = min(sx for sx, sy in my_soldiers)
+                            if tx < frontline_x - 1:
+                                score -= 20.0
+
+                # RAID role (raiders): prefer tiles adjacent to enemy archers, avoid soldiers
+                if role == "raid":
+                    enemy_archers = [(u["x"], u["y"]) for u in state["units"]
+                                     if u["owner"] != my_team and u["type"] == "ARCHER"]
+                    if enemy_archers:
+                        nd = min(chebyshev(tx, ty, ax, ay) for ax, ay in enemy_archers)
+                        od = min(chebyshev(ux, uy, ax, ay) for ax, ay in enemy_archers)
+                        score += (od - nd) * w["w_enemy_unit"]
+                    # Penalise moving adjacent to enemy soldiers (0x damage but die to ZoC)
+                    enemy_sol_pos = [(u["x"], u["y"]) for u in state["units"]
+                                     if u["owner"] != my_team and u["type"] == "SOLDIER"]
+                    adj_soldiers = sum(1 for sx, sy in enemy_sol_pos
+                                       if chebyshev(tx, ty, sx, sy) <= 1)
+                    score -= adj_soldiers * 12.0
+
                 # Light caution in attack mode when injured
                 if danger > 0 and lethal_enemy_pos:
                     nd = min(chebyshev(tx, ty, tx2, ty2) for tx2, ty2 in lethal_enemy_pos)
@@ -654,7 +915,7 @@ def best_move(unit, state, my_team, unit_positions, ex, W, danger: float = 0.0,
 
 # ── main action generator ──────────────────────────────────────────────────────
 
-def generate_actions(state, my_team):
+def generate_actions(state, my_team, turn=0):
     w         = weights
     actions   = []
     tile_lut  = {(t["x"], t["y"]): t for t in state["map"]["tiles"]}
@@ -670,6 +931,10 @@ def generate_actions(state, my_team):
 
     enemy_soldiers = [(u["x"], u["y"]) for u in state["units"]
                       if u["owner"] != my_team and u["type"] == "SOLDIER"]
+
+    # Update enemy composition tracker with currently visible units
+    enemy_units_all = [u for u in state["units"] if u["owner"] != my_team]
+    update_enemy_composition(enemy_units_all)
 
     # 1. BUILD CITY
     city_cost = round(80 * (1.5 ** max(0, len(my_cities) - 1)))
@@ -694,7 +959,6 @@ def generate_actions(state, my_team):
             my_cities.append({"x": bx, "y": by, "owner": my_team})
 
     # 2. BUILD UNITS
-    enemy_units_all = [u for u in state["units"] if u["owner"] != my_team]
     n_cities     = len(my_cities)
     unit_counts  = {"SOLDIER": 0, "ARCHER": 0, "RAIDER": 0}
     for u in my_units:
@@ -711,31 +975,20 @@ def generate_actions(state, my_team):
     # Don't build if projected upkeep after build would be too high
     n_units_now = len(my_units)
 
-    build_priority = counter_build_priority(enemy_units_all)
-    cities_used = set()
-    for city in my_cities:
-        key = (city["x"], city["y"])
-        if key in unit_pos or key in cities_used:
-            continue
-        for utype in build_priority:
-            if unit_counts[utype] >= want[utype]:
-                continue
-            cost = UNIT_COSTS[utype]
-            if gold < cost:
-                continue
-            # Check upkeep won't bankrupt us next turn
-            upkeep_after = compute_upkeep(n_units_now + 1, n_cities)
-            if upkeep_after > gold - cost:
-                continue
-            actions.append({"action": "BUILD_UNIT", "city_x": key[0], "city_y": key[1], "unit_type": utype})
-            gold -= cost
-            unit_counts[utype] += 1
-            n_units_now += 1
-            cities_used.add(key)
-            break
+    # Detect mode early so expand and build steps can react to it
+    mode  = detect_mode(state, my_team, gold, turn)
+    roles = assign_unit_roles(state, my_team, mode)
 
-    # 3. EXPAND TERRITORY
-    max_exp = min(int(w["max_expands"]), int(gold // 5))
+    # Initial priority by counter; overridden below after mode detection
+    build_priority = counter_build_priority(enemy_units_all)
+
+    # 3. EXPAND TERRITORY — boost expansion in PRESSURE/DISRUPT to match econ bots
+    expand_limit = int(w["max_expands"])
+    if mode == "PRESSURE":
+        expand_limit = max(expand_limit, int(w["max_expands"]) + 4)
+    elif mode == "TURTLE":
+        expand_limit = 2   # minimal expansion when holding score lead
+    max_exp = min(expand_limit, int(gold // 5))
     if max_exp > 0:
         conn = connected_territory(state, my_team)
         seen, candidates = set(), []
@@ -756,6 +1009,52 @@ def generate_actions(state, my_team):
             actions.append({"action": "EXPAND_TERRITORY", "x": nx, "y": ny})
             gold -= 5
 
+    # Mode-aware build priority override
+    if mode == "TURTLE":
+        build_priority = ["SOLDIER", "ARCHER", "RAIDER"]   # defensive only
+    elif mode == "ALLOUT":
+        build_priority = ["SOLDIER", "SOLDIER", "ARCHER"]  # flood soldiers
+    elif mode in ("DEFEND", "FINISH"):
+        build_priority = ["SOLDIER", "ARCHER", "RAIDER"]
+    elif mode == "GREED":
+        build_priority = ["RAIDER", "ARCHER", "SOLDIER"]   # income-friendly army
+    # else: counter_build_priority already computed above
+
+    # TURTLE: skip city building entirely — save gold for units
+    if mode == "TURTLE":
+        actions = [a for a in actions if a["action"] != "BUILD_CITY"]
+        if actions and actions and any(a["action"] == "BUILD_CITY" for a in actions):
+            gold += city_cost  # refund if we removed it
+
+    # Rebuild units with potentially new priority
+    cities_used = set()
+    # Remove any build-unit actions added above (re-run cleanly with mode priority)
+    actions = [a for a in actions if a["action"] != "BUILD_UNIT"]
+    # Reload gold used before unit building (after city build)
+    gold = estimate_gold_after_income(state, my_team)
+    if actions and actions[0]["action"] == "BUILD_CITY":
+        gold -= city_cost   # city_cost was computed before my_cities was extended
+    n_units_now = len(my_units)
+    for city in my_cities:
+        key = (city["x"], city["y"])
+        if key in unit_pos or key in cities_used:
+            continue
+        for utype in build_priority:
+            if unit_counts[utype] >= want[utype]:
+                continue
+            cost = UNIT_COSTS[utype]
+            if gold < cost:
+                continue
+            upkeep_after = compute_upkeep(n_units_now + 1, len(my_cities))
+            if upkeep_after > gold - cost:
+                continue
+            actions.append({"action": "BUILD_UNIT", "city_x": key[0], "city_y": key[1], "unit_type": utype})
+            gold -= cost
+            unit_counts[utype] += 1
+            n_units_now += 1
+            cities_used.add(key)
+            break
+
     # 4. MOVE UNITS
     # Assign monument guards before movement so dedicated units go to monuments
     monument_assignments = assign_monument_guards(state, my_team, my_units)
@@ -772,9 +1071,11 @@ def generate_actions(state, my_team):
             continue
         if in_zoc(unit, enemy_soldiers):
             continue
-        danger = threat_level(unit, state, my_team)
+        danger    = threat_level(unit, state, my_team)
         mon_target = monument_assignments.get((unit["x"], unit["y"]))
-        pos = best_move(unit, state, my_team, set(moving_pos.keys()), ex, W, danger, mon_target)
+        role      = roles.get((unit["x"], unit["y"]), "attack")
+        pos = best_move(unit, state, my_team, set(moving_pos.keys()), ex, W, danger, mon_target,
+                        mode=mode, role=role)
         if pos:
             actions.append({
                 "action": "MOVE",
@@ -820,9 +1121,13 @@ async def main():
                         team_id     = msg["teamId"]
                         print(f"[bot] Team {team_id}")
                         _game_stats = {"monument_turns": 0, "peak_territory": 0, "peak_cities": 0}
+                        # Reset composition tracker for new game
+                        for k in _enemy_composition:
+                            _enemy_composition[k] = 0.0
 
                     elif msg["type"] == "TURN_START":
-                        last_state = msg["state"]
+                        last_state  = msg["state"]
+                        current_turn = msg.get("turn", 0)
 
                         if team_id is not None:
                             mon_controlled = sum(
@@ -842,7 +1147,7 @@ async def main():
                             _game_stats["peak_cities"] = max(_game_stats["peak_cities"], cities)
 
                         try:
-                            actions = generate_actions(last_state, team_id)
+                            actions = generate_actions(last_state, team_id, current_turn)
                             await ws.send(json.dumps({"type": "SUBMIT_ACTIONS", "actions": actions}))
                         except Exception as e:
                             print(f"[bot] Error generating actions: {e}")

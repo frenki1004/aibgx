@@ -1,0 +1,22 @@
+{
+  "smart": {
+    "score_rate": 1.208177852293731,
+    "gold_rate": 0.09376198274921915,
+    "territory_rate": 0.008586994125827623,
+    "monument_pressure": 0.5975694007838631,
+    "soldier_frac": 0.5101564851758061,
+    "archer_frac": 0.27286013437929424,
+    "raider_frac": 0.07905525654766128,
+    "games": 51
+  },
+  "smart2": {
+    "score_rate": 0.03759285252447056,
+    "gold_rate": -0.002949677229984047,
+    "territory_rate": 0.0006930803167645453,
+    "monument_pressure": 0.12275846408542024,
+    "soldier_frac": 0.3999597049525849,
+    "archer_frac": 0.2685246140984455,
+    "raider_frac": 0.0,
+    "games": 50
+  }
+}

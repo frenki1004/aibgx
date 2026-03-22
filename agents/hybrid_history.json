@@ -1,0 +1,560 @@
+[
+  {
+    "outcome": "win",
+    "score_delta": 107,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 12,
+    "peak_territory": 113,
+    "peak_cities": 2
+  },
+  {
+    "outcome": "win",
+    "score_delta": 2585,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 91,
+    "peak_territory": 321,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1558,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 151,
+    "peak_territory": 321,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 3699,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 296,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 443,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 320,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 107,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 333,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1183,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 379,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 463,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 403,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 31,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 406,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 490,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 436,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 509,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 468,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1523,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 537,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 798,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 577,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 90,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 585,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 524,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 618,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1052,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 666,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 682,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 703,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 211,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 722,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 302,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 752,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 81,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 760,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 457,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 780,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 82,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 790,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 956,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 837,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 193,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 855,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 175,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 871,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 4612,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 1092,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 374,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 1119,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 4058,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 1263,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 715,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 1294,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 7392,
+    "reason": "score",
+    "opponent": "aggressive",
+    "monument_turns": 1618,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 12070,
+    "reason": "score",
+    "opponent": "aggressive",
+    "monument_turns": 1942,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 27,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 1945,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 40,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 1949,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 2499,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2050,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 62,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2057,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 830,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2101,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 153,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2116,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 522,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2146,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 2335,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2242,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 10284,
+    "reason": "score",
+    "opponent": "aggressive",
+    "monument_turns": 2569,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1166,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 2613,
+    "peak_territory": 334,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 7556,
+    "reason": "score",
+    "opponent": "aggressive",
+    "monument_turns": 2943,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 7255,
+    "reason": "score",
+    "opponent": "aggressive",
+    "monument_turns": 3276,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 5655,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3442,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 301,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3465,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 525,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3491,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1659,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3562,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 283,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3587,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 1096,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3637,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "win",
+    "score_delta": 785,
+    "reason": "elimination",
+    "opponent": "aggressive",
+    "monument_turns": 3670,
+    "peak_territory": 340,
+    "peak_cities": 6
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 7151,
+    "reason": "elimination",
+    "opponent": "econ",
+    "monument_turns": 96,
+    "peak_territory": 62,
+    "peak_cities": 5
+  },
+  {
+    "outcome": "win",
+    "score_delta": 23174,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 424,
+    "peak_territory": 78,
+    "peak_cities": 5
+  },
+  {
+    "outcome": "win",
+    "score_delta": 11797,
+    "reason": "elimination",
+    "opponent": "econ",
+    "monument_turns": 595,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "win",
+    "score_delta": 28022,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 924,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "win",
+    "score_delta": 23866,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 1252,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "win",
+    "score_delta": 25722,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 1578,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 283,
+    "reason": "elimination",
+    "opponent": "econ",
+    "monument_turns": 1594,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "win",
+    "score_delta": 31133,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 1922,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 4774,
+    "reason": "elimination",
+    "opponent": "econ",
+    "monument_turns": 2029,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "win",
+    "score_delta": 34947,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 2358,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "win",
+    "score_delta": 28208,
+    "reason": "score",
+    "opponent": "econ",
+    "monument_turns": 2686,
+    "peak_territory": 243,
+    "peak_cities": 22
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 3542,
+    "reason": "elimination",
+    "opponent": "econ",
+    "monument_turns": 2752,
+    "peak_territory": 243,
+    "peak_cities": 22
+  }
+]

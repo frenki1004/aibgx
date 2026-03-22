@@ -1,0 +1,18 @@
+{
+  "w_forward": 8.80305287398551,
+  "w_enemy_city": 40.39286557363301,
+  "w_enemy_unit": 0.5016708652633981,
+  "w_monument": 0.18854959710325114,
+  "w_raid_tile": 0.0,
+  "w_city_capture": 5.917762262752508,
+  "w_monument_guard": 21.176536903638848,
+  "w_plunder": 31.851718682378028,
+  "max_cities": 3.1320882643455477,
+  "soldiers_per_city": 2.6888503399706165,
+  "archers_per_city": 0.0,
+  "raiders_per_city": 0.0,
+  "max_expands": 3.712630889682491,
+  "gold_buffer": 0.0,
+  "w_zoc_offense": 15.981987172755098,
+  "w_archer_range": 40.58913628356766
+}

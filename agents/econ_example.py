@@ -1,28 +1,18 @@
 """
-Improved Python bot with self-learning via weight evolution.
+Economy-focused Python bot with self-learning via weight evolution.
 
-How it learns:
-  - All scoring decisions are driven by a WEIGHTS dict
-  - After every game the result (win/loss/score) is written to learn_history.json
-  - Every EVAL_EVERY games the fitness (mean score_delta) is evaluated:
-      * If fitness improved → save as new best weights
-      * Mutate is always applied to the BEST weights seen so far (not the current
-        possibly-bad ones), so the search never drifts far from a known good config
-      * Mutation sigma scales with recent performance: losing badly → explore more
-      * Directional hints nudge weights toward fixing the diagnosed loss cause:
-          - Elimination losses  → more military, less gold buffer
-          - Score losses w/ few monuments → stronger monument weights
-          - Score losses w/ low territory → expand more
-  - In-game stats (monument control turns, peak territory, peak cities) are
-    recorded per game and used to diagnose loss causes at eval time
+Strategy: build cities fast, expand territory aggressively, use raiders to
+plunder enemy tiles for gold, keep a large gold buffer, and only build a
+minimal defensive army. Win by score through territory and monument income
+rather than military domination.
 
 Run:
-  python3 agents/python_example.py
+  python3 agents/econ_example.py
 
 Files written next to this script:
-  learn_weights.json      — current weights (being tested)
-  learn_best_weights.json — best weights found so far (always kept safe)
-  learn_history.json      — per-game results + stats log
+  econ_weights.json      — current weights (being tested)
+  econ_best_weights.json — best weights found so far (always kept safe)
+  econ_history.json      — per-game results + stats log
 """
 
 import asyncio, json, os, random, math
@@ -30,7 +20,7 @@ import asyncio, json, os, random, math
 SERVER_URL = os.environ.get("SERVER_URL", "ws://localhost:8080")
 PASSWORD   = os.environ.get("PASSWORD", "player")
 TEAM       = int(os.environ.get("TEAM", "0"))
-NAME       = os.environ.get("BOT_NAME", "PyBot")
+NAME       = os.environ.get("BOT_NAME", "EconBot")
 OPPONENT   = os.environ.get("OPPONENT", "unknown")   # set by train.py on each rotation
 
 team_id = None
@@ -58,27 +48,28 @@ MUTATION_SIGMA  = 0.12   # std-dev of Gaussian weight perturbation (as fraction)
 HISTORY_WINDOW  = 20     # games to look back when evaluating win-rate
 
 SCRIPT_DIR           = os.path.dirname(os.path.abspath(__file__))
-WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "learn_weights.json")
-BEST_WEIGHTS_FILE    = os.path.join(SCRIPT_DIR, "learn_best_weights.json")
-HISTORY_FILE         = os.path.join(SCRIPT_DIR, "learn_history.json")
+WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "econ_weights.json")
+BEST_WEIGHTS_FILE    = os.path.join(SCRIPT_DIR, "econ_best_weights.json")
+HISTORY_FILE         = os.path.join(SCRIPT_DIR, "econ_history.json")
 
 DEFAULT_WEIGHTS = {
-    "w_forward":        8.0,   # reward for pushing toward enemy side
-    "w_enemy_city":    15.0,   # reward for soldiers approaching enemy city
-    "w_enemy_unit":     5.0,   # reward for approaching any enemy unit
-    "w_monument":       6.0,   # reward for approaching uncontrolled monument
-    "w_raid_tile":      8.0,   # bonus for stepping onto enemy territory
-    "w_city_capture": 100.0,   # bonus for soldiers stepping onto enemy city
-    "w_monument_guard":20.0,   # reward per step closer for monument guard units
-    "w_plunder":       10.0,   # reward per enemy tile in raider's 3x3 plunder area
-    "w_zoc_offense":    8.0,   # reward for soldiers moving within ZoC range of enemy archers/raiders
-    "w_archer_range":   6.0,   # reward for archers staying at fire range 2; penalty for range 1 (melee)
-    "max_cities":       4.0,   # build cities up to this count
-    "soldiers_per_city":2.0,   # target soldiers = this * num_cities
-    "archers_per_city": 1.0,   # target archers = ceil(this * num_cities); was 0.5 (never built with 1 city)
-    "raiders_per_city": 0.5,   # target raiders = ceil(this * num_cities); was 0.33
-    "max_expands":      5.0,   # max territory expansions per turn
-    "gold_buffer":     30.0,   # keep this much gold in reserve before building a city
+    # Economy weights — high expansion, many cities, raiders for plunder
+    "w_forward":        4.0,   # less aggressive forward push — stay back and build
+    "w_enemy_city":     8.0,   # soldiers still threaten cities but it's not the focus
+    "w_enemy_unit":     2.0,   # don't chase enemy units — waste of movement
+    "w_monument":      12.0,   # monuments give gold + score per city — critical for econ
+    "w_raid_tile":      5.0,   # step onto enemy tiles when passing through
+    "w_city_capture": 100.0,   # still capture cities of opportunity
+    "w_monument_guard":30.0,   # very strong pull to control monuments (gold income)
+    "w_plunder":       20.0,   # raiders are primary income — reward deep plundering
+    "w_zoc_offense":    3.0,   # minimal ZoC aggression — soldiers are defensive
+    "w_archer_range":   8.0,   # keep archers safe at range, guarding cities
+    "max_cities":       6.0,   # build as many cities as possible (more income + units)
+    "soldiers_per_city":1.0,   # minimal soldiers — just enough to defend
+    "archers_per_city": 1.0,   # archers per city for ranged defence
+    "raiders_per_city": 1.5,   # many raiders for plundering enemy territory
+    "max_expands":     10.0,   # expand territory as much as possible every turn
+    "gold_buffer":     50.0,   # large reserve — always have gold for next city
 }
 
 # ── weight persistence ─────────────────────────────────────────────────────────
@@ -175,22 +166,22 @@ def win_rate(history: list, window: int) -> float:
 
 # Reasonable bounds for each weight — warn if evolution drifts outside these
 WEIGHT_SANITY = {
-    "w_forward":         (3,   20),
-    "w_enemy_city":      (8,   40),
-    "w_enemy_unit":      (1,   15),
-    "w_monument":        (2,   15),
-    "w_raid_tile":       (2,   20),
-    "w_city_capture":    (70, 150),   # must stay high — capturing cities is critical
-    "w_monument_guard":  (8,   40),
-    "w_plunder":         (2,   25),
-    "w_zoc_offense":     (2,   20),   # was drifting to 49 — cap tightened
-    "w_archer_range":    (2,   15),
-    "max_cities":        (2,    6),
-    "soldiers_per_city": (1,    4),
+    "w_forward":         (1,   12),
+    "w_enemy_city":      (3,   25),
+    "w_enemy_unit":      (0,   10),
+    "w_monument":        (5,   25),   # monuments are income — keep high
+    "w_raid_tile":       (1,   15),
+    "w_city_capture":    (70, 150),
+    "w_monument_guard":  (15,  50),   # strong monument control for gold
+    "w_plunder":         (8,   35),   # raiders are primary income — keep high
+    "w_zoc_offense":     (1,   12),
+    "w_archer_range":    (3,   18),
+    "max_cities":        (4,    8),   # econ always wants many cities
+    "soldiers_per_city": (0.5,  2),   # minimal military
     "archers_per_city":  (0.5,  2),
-    "raiders_per_city":  (0,  1.5),
-    "max_expands":       (3,   12),
-    "gold_buffer":       (22,  50),   # must stay positive — 0 causes bankruptcy
+    "raiders_per_city":  (0.5,  3),   # raiders are core — keep at least 0.5
+    "max_expands":       (6,   15),   # always expand aggressively
+    "gold_buffer":       (30,  80),   # large buffer — econ needs reserves
 }
 
 

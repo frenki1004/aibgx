@@ -1,28 +1,17 @@
 """
-Improved Python bot with self-learning via weight evolution.
+Aggressive Python bot with self-learning via weight evolution.
 
-How it learns:
-  - All scoring decisions are driven by a WEIGHTS dict
-  - After every game the result (win/loss/score) is written to learn_history.json
-  - Every EVAL_EVERY games the fitness (mean score_delta) is evaluated:
-      * If fitness improved → save as new best weights
-      * Mutate is always applied to the BEST weights seen so far (not the current
-        possibly-bad ones), so the search never drifts far from a known good config
-      * Mutation sigma scales with recent performance: losing badly → explore more
-      * Directional hints nudge weights toward fixing the diagnosed loss cause:
-          - Elimination losses  → more military, less gold buffer
-          - Score losses w/ few monuments → stronger monument weights
-          - Score losses w/ low territory → expand more
-  - In-game stats (monument control turns, peak territory, peak cities) are
-    recorded per game and used to diagnose loss causes at eval time
+Strategy: flood the map with soldiers, pin enemy ranged units with ZoC,
+capture enemy cities, and expand territory to generate income that fuels
+the military machine. Win by elimination or overwhelming score lead.
 
 Run:
-  python3 agents/python_example.py
+  python3 agents/aggressive_example.py
 
 Files written next to this script:
-  learn_weights.json      — current weights (being tested)
-  learn_best_weights.json — best weights found so far (always kept safe)
-  learn_history.json      — per-game results + stats log
+  aggressive_weights.json      — current weights (being tested)
+  aggressive_best_weights.json — best weights found so far (always kept safe)
+  aggressive_history.json      — per-game results + stats log
 """
 
 import asyncio, json, os, random, math
@@ -30,7 +19,7 @@ import asyncio, json, os, random, math
 SERVER_URL = os.environ.get("SERVER_URL", "ws://localhost:8080")
 PASSWORD   = os.environ.get("PASSWORD", "player")
 TEAM       = int(os.environ.get("TEAM", "0"))
-NAME       = os.environ.get("BOT_NAME", "PyBot")
+NAME       = os.environ.get("BOT_NAME", "AggroBot")
 OPPONENT   = os.environ.get("OPPONENT", "unknown")   # set by train.py on each rotation
 
 team_id = None
@@ -58,27 +47,28 @@ MUTATION_SIGMA  = 0.12   # std-dev of Gaussian weight perturbation (as fraction)
 HISTORY_WINDOW  = 20     # games to look back when evaluating win-rate
 
 SCRIPT_DIR           = os.path.dirname(os.path.abspath(__file__))
-WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "learn_weights.json")
-BEST_WEIGHTS_FILE    = os.path.join(SCRIPT_DIR, "learn_best_weights.json")
-HISTORY_FILE         = os.path.join(SCRIPT_DIR, "learn_history.json")
+WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "aggressive_weights.json")
+BEST_WEIGHTS_FILE    = os.path.join(SCRIPT_DIR, "aggressive_best_weights.json")
+HISTORY_FILE         = os.path.join(SCRIPT_DIR, "aggressive_history.json")
 
 DEFAULT_WEIGHTS = {
-    "w_forward":        8.0,   # reward for pushing toward enemy side
-    "w_enemy_city":    15.0,   # reward for soldiers approaching enemy city
-    "w_enemy_unit":     5.0,   # reward for approaching any enemy unit
-    "w_monument":       6.0,   # reward for approaching uncontrolled monument
-    "w_raid_tile":      8.0,   # bonus for stepping onto enemy territory
-    "w_city_capture": 100.0,   # bonus for soldiers stepping onto enemy city
-    "w_monument_guard":20.0,   # reward per step closer for monument guard units
-    "w_plunder":       10.0,   # reward per enemy tile in raider's 3x3 plunder area
-    "w_zoc_offense":    8.0,   # reward for soldiers moving within ZoC range of enemy archers/raiders
-    "w_archer_range":   6.0,   # reward for archers staying at fire range 2; penalty for range 1 (melee)
-    "max_cities":       4.0,   # build cities up to this count
-    "soldiers_per_city":2.0,   # target soldiers = this * num_cities
-    "archers_per_city": 1.0,   # target archers = ceil(this * num_cities); was 0.5 (never built with 1 city)
-    "raiders_per_city": 0.5,   # target raiders = ceil(this * num_cities); was 0.33
-    "max_expands":      5.0,   # max territory expansions per turn
-    "gold_buffer":     30.0,   # keep this much gold in reserve before building a city
+    # Aggressive weights — soldiers everywhere, capture cities, dominate map
+    "w_forward":       15.0,   # strong push toward enemy side every turn
+    "w_enemy_city":    30.0,   # soldiers beeline for enemy cities
+    "w_enemy_unit":     8.0,   # engage enemy units — don't let them roam free
+    "w_monument":       8.0,   # contest monuments for score bonus
+    "w_raid_tile":     10.0,   # convert enemy territory while pushing forward
+    "w_city_capture": 100.0,   # top priority when a soldier can step onto enemy city
+    "w_monument_guard":15.0,   # hold monuments once taken
+    "w_plunder":        6.0,   # raiders follow up the army, mop up territory
+    "w_zoc_offense":   15.0,   # soldiers aggressively pin enemy archers/raiders
+    "w_archer_range":   5.0,   # archers support the push, stay just behind front line
+    "max_cities":       4.0,   # enough cities to sustain large army without upkeep debt
+    "soldiers_per_city":3.5,   # large standing army — soldiers are the win condition
+    "archers_per_city": 0.5,   # small archer support to soften targets
+    "raiders_per_city": 0.5,   # small raider force to plunder and flank
+    "max_expands":      6.0,   # expand forward to push spawn points up the map
+    "gold_buffer":     20.0,   # smaller buffer — spend gold on units, not savings
 }
 
 # ── weight persistence ─────────────────────────────────────────────────────────
@@ -175,22 +165,22 @@ def win_rate(history: list, window: int) -> float:
 
 # Reasonable bounds for each weight — warn if evolution drifts outside these
 WEIGHT_SANITY = {
-    "w_forward":         (3,   20),
-    "w_enemy_city":      (8,   40),
-    "w_enemy_unit":      (1,   15),
-    "w_monument":        (2,   15),
-    "w_raid_tile":       (2,   20),
-    "w_city_capture":    (70, 150),   # must stay high — capturing cities is critical
-    "w_monument_guard":  (8,   40),
-    "w_plunder":         (2,   25),
-    "w_zoc_offense":     (2,   20),   # was drifting to 49 — cap tightened
-    "w_archer_range":    (2,   15),
+    "w_forward":         (8,   25),   # always pushing hard
+    "w_enemy_city":      (15,  50),   # always targeting enemy cities
+    "w_enemy_unit":      (3,   18),
+    "w_monument":        (3,   18),
+    "w_raid_tile":       (4,   20),
+    "w_city_capture":    (70, 150),
+    "w_monument_guard":  (5,   30),
+    "w_plunder":         (2,   18),
+    "w_zoc_offense":     (8,   25),   # ZoC is core — keep high
+    "w_archer_range":    (2,   12),
     "max_cities":        (2,    6),
-    "soldiers_per_city": (1,    4),
-    "archers_per_city":  (0.5,  2),
+    "soldiers_per_city": (2,    5),   # always many soldiers
+    "archers_per_city":  (0,  1.5),
     "raiders_per_city":  (0,  1.5),
-    "max_expands":       (3,   12),
-    "gold_buffer":       (22,  50),   # must stay positive — 0 causes bankruptcy
+    "max_expands":       (3,   10),
+    "gold_buffer":       (18,  40),   # lower buffer — spend on units
 }
 
 
