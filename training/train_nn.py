@@ -175,9 +175,12 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10, factor=0.5)
 
-    build_loss_fn = nn.CrossEntropyLoss()
-    move_loss_fn = nn.CrossEntropyLoss()
-    expand_loss_fn = nn.CrossEntropyLoss()
+    # label_smoothing=0.1 prevents overconfidence on padding slots
+    # (empty unit/city slots are all target=0, model becomes 99.99% confident,
+    #  then explodes when a real unit needs a different action)
+    build_loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
+    move_loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
+    expand_loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
     city_loss_fn = nn.BCEWithLogitsLoss()
     value_loss_fn = nn.MSELoss()
 
@@ -201,6 +204,11 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
             value_t = value_t.to(device)
 
             build_logits, move_logits, expand_logits, city_logit, value_pred = model(features)
+
+            # Clamp logits to prevent extreme values from padding-dominated slots
+            build_logits = build_logits.clamp(-20, 20)
+            move_logits = move_logits.clamp(-20, 20)
+            expand_logits = expand_logits.clamp(-20, 20)
 
             # Policy losses
             b_loss = sum(
@@ -262,6 +270,9 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
                 value_t = value_t.to(device)
 
                 build_logits, move_logits, expand_logits, city_logit, value_pred = model(features)
+                build_logits = build_logits.clamp(-20, 20)
+                move_logits = move_logits.clamp(-20, 20)
+                expand_logits = expand_logits.clamp(-20, 20)
 
                 b_loss = sum(build_loss_fn(build_logits[:, i, :], build_t[:, i]) for i in range(MAX_CITIES)) / MAX_CITIES
                 m_loss = sum(move_loss_fn(move_logits[:, i, :], move_t[:, i]) for i in range(MAX_UNITS)) / MAX_UNITS
