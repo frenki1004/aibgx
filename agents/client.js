@@ -206,9 +206,11 @@ function handleMessage(message) {
       break;
 
     case 'ACTIONS_RECEIVED':
-      console.log(`Actions received: ${message.accepted} accepted, ${message.rejected} rejected`);
+      if (message.accepted !== undefined) {
+        console.log(`Actions received: ${message.accepted} accepted, ${message.rejected} rejected`);
+      }
       if (message.errors && message.errors.length > 0) {
-        console.log('Errors:', message.errors);
+        console.log('Action errors:', message.errors);
       }
       break;
 

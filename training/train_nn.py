@@ -392,7 +392,12 @@ def main():
     onnx_path = os.path.join(args.output, "civclash_agent.onnx")
     json_path = os.path.join(args.output, "civclash_agent_weights.json")
 
-    export_onnx(model.cpu(), input_dim, onnx_path)
+    try:
+        export_onnx(model.cpu(), input_dim, onnx_path)
+    except Exception as e:
+        print(f"ONNX export skipped ({e})")
+        onnx_path = "skipped"
+
     export_json_weights(model, json_path)
 
     print(f"\n=== Training Complete ===")

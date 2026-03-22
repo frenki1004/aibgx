@@ -40,7 +40,7 @@ function runCommand(cmd, description) {
   console.log(`\n>>> ${description}`);
   console.log(`    ${cmd}\n`);
   try {
-    execSync(cmd, { stdio: 'inherit', cwd: trainingDir, timeout: 30 * 60 * 1000 }); // 30 min max per command
+    execSync(cmd, { stdio: 'inherit', cwd: trainingDir, timeout: 60 * 60 * 1000 }); // 60 min max per command
     return true;
   } catch (err) {
     console.error(`Command failed: ${err.message}`);
