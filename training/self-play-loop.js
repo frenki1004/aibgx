@@ -24,9 +24,11 @@ const path = require('path');
 const fs = require('fs');
 
 const args = process.argv.slice(2);
-const ITERATIONS = parseInt(args[0]) || 3;
-const GAMES_PER_ITER = parseInt(args[1]) || 50;
-const SIMS_PER_TURN = parseInt(args[2]) || 500;
+const LARGE_MODEL = args.includes('--large');
+const positionalArgs = args.filter(a => !a.startsWith('--'));
+const ITERATIONS = parseInt(positionalArgs[0]) || 3;
+const GAMES_PER_ITER = parseInt(positionalArgs[1]) || 50;
+const SIMS_PER_TURN = parseInt(positionalArgs[2]) || 500;
 const MODE = 'tournament';
 
 const trainingDir = __dirname;
@@ -48,20 +50,13 @@ function runCommand(cmd, description) {
   }
 }
 
-function findLatestFile(dir, prefix) {
-  if (!fs.existsSync(dir)) return null;
-  const files = fs.readdirSync(dir)
-    .filter(f => f.startsWith(prefix) && f.endsWith('.jsonl'))
+function getLatestDataFile() {
+  if (!fs.existsSync(dataDir)) return [];
+  const files = fs.readdirSync(dataDir)
+    .filter(f => f.startsWith('mcts_nn_') && f.endsWith('.jsonl'))
     .sort()
     .reverse();
-  return files.length > 0 ? path.join(dir, files[0]) : null;
-}
-
-function getAllDataFiles() {
-  if (!fs.existsSync(dataDir)) return [];
-  return fs.readdirSync(dataDir)
-    .filter(f => f.startsWith('mcts_nn_') && f.endsWith('.jsonl'))
-    .map(f => path.join(dataDir, f));
+  return files.length > 0 ? [path.join(dataDir, files[0])] : [];
 }
 
 async function main() {
@@ -71,7 +66,8 @@ async function main() {
   console.log(`Iterations: ${ITERATIONS}`);
   console.log(`Games per iteration: ${GAMES_PER_ITER}`);
   console.log(`MCTS sims per turn: ${SIMS_PER_TURN}`);
-  console.log(`Mode: ${MODE}\n`);
+  console.log(`Mode: ${MODE}`);
+  console.log(`Model: ${LARGE_MODEL ? 'LARGE (~1M params, 75 epochs)' : 'SMALL (~380K params, 30 epochs)'}\n`);
 
   const results = [];
 
@@ -85,7 +81,8 @@ async function main() {
     const weightsFile = path.join(modelDir, 'civclash_agent_weights.json');
     const hasNN = iter > 1 && fs.existsSync(weightsFile);
 
-    let generateCmd = `node mcts-generate.js ${GAMES_PER_ITER} ${MODE} ${SIMS_PER_TURN}`;
+    const workerCount = LARGE_MODEL ? 12 : 6;
+    let generateCmd = `node mcts-generate.js ${GAMES_PER_ITER} ${MODE} ${SIMS_PER_TURN} --workers=${workerCount}`;
 
     if (hasNN) {
       // Pass NN weights path as extra CLI arg — use forward slashes for Windows shell safety
@@ -100,18 +97,19 @@ async function main() {
       break;
     }
 
-    // Step 2: Train NN on ALL accumulated data
-    const allData = getAllDataFiles();
-    if (allData.length === 0) {
+    // Step 2: Train NN on latest data only (freshest, highest quality)
+    const latestData = getLatestDataFile();
+    if (latestData.length === 0) {
       console.error('No data files found. Stopping.');
       break;
     }
 
-    const epochs = 75;
+    const epochs = LARGE_MODEL ? 75 : 30;
     const safeModelDir = modelDir.replace(/\\/g, '/');
-    const safeDataArgs = allData.map(f => `"${f.replace(/\\/g, '/')}"`).join(' ');
-    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --lr 0.0003 --output "${safeModelDir}"`;
-    const trainSuccess = runCommand(trainCmd, `Step 2: Train NN on ${allData.length} data files (${epochs} epochs)`);
+    const safeDataArgs = latestData.map(f => `"${f.replace(/\\/g, '/')}"`).join(' ');
+    const largeFlag = LARGE_MODEL ? ' --large' : '';
+    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --lr 0.0003 --output "${safeModelDir}"${largeFlag}`;
+    const trainSuccess = runCommand(trainCmd, `Step 2: Train NN on ${latestData.length} data files (${epochs} epochs)`);
     if (!trainSuccess) {
       console.error('Training failed. Stopping.');
       break;
@@ -122,20 +120,20 @@ async function main() {
 
     // Count examples
     let totalExamples = 0;
-    for (const f of allData) {
+    for (const f of latestData) {
       const lines = fs.readFileSync(f, 'utf-8').trim().split('\n').length;
       totalExamples += lines;
     }
 
     const iterResult = {
       iteration: iter,
-      dataFiles: allData.length,
+      dataFiles: latestData.length,
       totalExamples,
       hasNN,
     };
     results.push(iterResult);
 
-    console.log(`  Data files: ${allData.length}`);
+    console.log(`  Data files: ${latestData.length}`);
     console.log(`  Total examples: ${totalExamples}`);
     console.log(`  NN weights: ${weightsFile}`);
   }

@@ -15,6 +15,10 @@ agents/best[0-9]*.js
 
 docs/unit-strategy-report.md
 
+# Training data and models
+training/data/
+training/models/
+
 # Simulation/test scripts (keep only logic.test.js)
 logic/tests/*
 !logic/tests/logic.test.js

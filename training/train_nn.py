@@ -8,7 +8,8 @@ Two training signals from MCTS:
 
 Architecture:
   Input: 290 features (global stats + per-unit + per-city)
-  Shared backbone: 290 → 1024 → 512 → 256
+  Small (default): 290 → 512 → 256 → 128 (~380K params, fast CPU)
+  Large (--large):  290 → 1024 → 512 → 256 (~1M params, for GPU)
   Heads:
     - build_head:  per-city unit build decision (6 × 4)
     - move_head:   per-unit move direction (20 × 9)
@@ -18,7 +19,7 @@ Architecture:
 
 Usage:
   pip install torch numpy onnx
-  python train_nn.py <data_files.jsonl> [--epochs 100] [--batch 64] [--lr 0.001]
+  python train_nn.py <data_files.jsonl> [--epochs 30] [--batch 64] [--lr 0.0003] [--large]
 
 Examples:
   python train_nn.py data/mcts_nn_*.jsonl --epochs 200
@@ -105,49 +106,55 @@ MAX_EXPAND = 16         # 0-15
 
 
 class CivClashNet(nn.Module):
-    def __init__(self, input_dim=290):
+    def __init__(self, input_dim=290, large=False):
         super().__init__()
 
-        # Shared backbone (1.5M params — ~5ms inference in pure JS, fits 300ms budget)
+        if large:
+            # Large model (~1M params — for GPU training)
+            h1, h2, h3 = 1024, 512, 256
+        else:
+            # Small model (~380K params — fast CPU training)
+            h1, h2, h3 = 512, 256, 128
+
         self.backbone = nn.Sequential(
-            nn.Linear(input_dim, 1024),
+            nn.Linear(input_dim, h1),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(1024, 512),
+            nn.Linear(h1, h2),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(512, 256),
+            nn.Linear(h2, h3),
             nn.ReLU(),
         )
 
         # Policy heads
         self.build_head = nn.Sequential(
-            nn.Linear(256, 64),
+            nn.Linear(h3, 64),
             nn.ReLU(),
             nn.Linear(64, MAX_CITIES * NUM_BUILD_OPTIONS),
         )
 
         self.move_head = nn.Sequential(
-            nn.Linear(256, 128),
+            nn.Linear(h3, 128),
             nn.ReLU(),
             nn.Linear(128, MAX_UNITS * NUM_MOVE_OPTIONS),
         )
 
         self.expand_head = nn.Sequential(
-            nn.Linear(256, 32),
+            nn.Linear(h3, 32),
             nn.ReLU(),
             nn.Linear(32, MAX_EXPAND),
         )
 
         self.city_head = nn.Sequential(
-            nn.Linear(256, 16),
+            nn.Linear(h3, 16),
             nn.ReLU(),
             nn.Linear(16, 1),
         )
 
         # Value head (predicts win probability)
         self.value_head = nn.Sequential(
-            nn.Linear(256, 64),
+            nn.Linear(h3, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -363,10 +370,11 @@ def export_json_weights(model, output_path):
 def main():
     parser = argparse.ArgumentParser(description="Train CivClash NN (MCTS distillation)")
     parser.add_argument("data", nargs="+", help="JSONL data files (supports glob)")
-    parser.add_argument("--epochs", type=int, default=75)
+    parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--batch", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--output", default="models", help="Output directory")
+    parser.add_argument("--large", action="store_true", help="Use 1M+ param model (for GPU)")
     args = parser.parse_args()
 
     files = []
@@ -397,7 +405,7 @@ def main():
     print(f"Device: {device}\n")
 
     input_dim = dataset.features.shape[1]
-    model = CivClashNet(input_dim=input_dim)
+    model = CivClashNet(input_dim=input_dim, large=args.large)
     param_count = sum(p.numel() for p in model.parameters())
     print(f"Model parameters: {param_count:,}\n")
 
