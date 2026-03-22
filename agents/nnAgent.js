@@ -446,10 +446,19 @@ function decodeActions(output, state, playerId) {
 // ============================================================
 // Load model
 // ============================================================
-const WEIGHTS_PATH = process.env.NN_WEIGHTS ||
-  path.join(__dirname, '..', 'training', 'models', 'civclash_agent_weights.json');
+const DEFAULT_WEIGHTS_PATH = path.join(__dirname, '..', 'training', 'models', 'civclash_agent_weights.json');
 
-const nn = new SimpleNN(WEIGHTS_PATH);
+// Default instance (used when running as agent via client.js)
+let nn = new SimpleNN(DEFAULT_WEIGHTS_PATH);
+
+/**
+ * Load NN from a specific weights path.
+ * Called by mcts-generate.js to load iteration-specific weights.
+ */
+function loadWeights(weightsPath) {
+  nn = new SimpleNN(weightsPath);
+  return nn.loaded;
+}
 
 // ============================================================
 // Main entry point
@@ -481,4 +490,19 @@ function generateActions(state, playerId) {
   }
 }
 
-module.exports = { generateActions };
+/**
+ * Get NN's value estimate (win probability) for a state.
+ * Used by MCTS engine as valueFunction in iterations 2+.
+ */
+function getValueEstimate(state, playerId) {
+  if (!nn.loaded) return null;
+  try {
+    const features = encodeState(state, playerId);
+    const output = nn.forward(features);
+    return output ? output.value : null;
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { generateActions, getValueEstimate, loadWeights };

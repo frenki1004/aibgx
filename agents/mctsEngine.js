@@ -18,12 +18,13 @@ const smarterAgent = require('./smarterAgent');
 // MCTS Node
 // ============================================================
 class MCTSNode {
-  constructor(state, playerId, parent, macroAction, prior) {
+  constructor(state, playerId, parent, macroAction, prior, depth) {
     this.state = state;
     this.playerId = playerId;
     this.parent = parent;
     this.macroAction = macroAction;      // { name, actions } that led to this node
     this.prior = prior || 0;             // NN policy prior (0 if no NN)
+    this.depth = depth || 0;             // Depth in tree
 
     this.children = [];
     this.expanded = false;
@@ -38,8 +39,6 @@ class MCTSNode {
 
   /**
    * UCB1 / PUCT selection score
-   * @param {number} cExplore - Exploration constant
-   * @param {boolean} usePrior - Whether to use NN prior (PUCT)
    */
   ucbScore(cExplore, usePrior) {
     if (this.visits === 0) return Infinity;
@@ -66,20 +65,24 @@ class MCTSEngine {
   /**
    * @param {Object} options
    * @param {number} options.simulations - Number of MCTS simulations per search (default: 500)
-   * @param {number} options.rolloutDepth - Max turns to simulate in rollout (default: 30)
+   * @param {number} options.rolloutDepth - Max turns to simulate in rollout (default: 8)
+   * @param {number} options.maxTreeDepth - Max depth of the search tree (default: 3)
    * @param {number} options.cExplore - Exploration constant (default: 1.41)
    * @param {Function} options.valueFunction - NN value function: (state, pid) → [0,1] win probability
    * @param {Function} options.policyFunction - NN policy function: (state, pid, macroActions) → priors[]
+   * @param {Function} options.opponentFunction - NN/heuristic for opponent: (state, pid) → actions[]
    * @param {number} options.timeLimitMs - Time limit in ms (0 = use simulation count)
    */
   constructor(options = {}) {
     this.simulations = options.simulations || 500;
-    this.rolloutDepth = options.rolloutDepth || 8;    // Shallow rollout for speed
+    this.rolloutDepth = options.rolloutDepth || 4;
+    this.maxTreeDepth = options.maxTreeDepth || 1;   // Keep at 1 unless NN makes expand() cheap
     this.cExplore = options.cExplore || 1.41;
     this.valueFunction = options.valueFunction || null;
     this.policyFunction = options.policyFunction || null;
+    this.opponentFunction = options.opponentFunction || null; // NN opponent model
     this.timeLimitMs = options.timeLimitMs || 0;
-    this.fastMode = options.fastMode || false;        // Skip rollout, just evaluate position
+    this.fastMode = options.fastMode || false;
   }
 
   /**
@@ -87,8 +90,19 @@ class MCTSEngine {
    * Returns the best macro-action and visit count distribution.
    */
   search(state, playerId) {
-    const root = new MCTSNode(state, playerId, null, null, 0);
+    const root = new MCTSNode(state, playerId, null, null, 0, 0);
     this.expand(root);
+
+    // If expand produced no children, return empty immediately — don't loop
+    if (root.children.length === 0) {
+      return {
+        actions: [],
+        macroName: 'no_options',
+        rootVisits: {},
+        totalSimulations: 0,
+        timeMs: 0,
+      };
+    }
 
     const startTime = Date.now();
     let simCount = 0;
@@ -100,23 +114,29 @@ class MCTSEngine {
       } else {
         if (simCount >= this.simulations) break;
       }
+      // Safety: never exceed 10 seconds
+      if (Date.now() - startTime > 10000) break;
 
-      // 1. Select
+      // 1. Select — traverse tree to a leaf
       const leaf = this.select(root);
 
-      // 2. Expand (if not terminal)
-      if (!leaf.state.gameOver && !leaf.expanded) {
+      // 2. Expand (if not terminal and below max depth)
+      if (!leaf.state.gameOver && !leaf.expanded && leaf.depth < this.maxTreeDepth) {
         this.expand(leaf);
       }
 
-      // 3. Evaluate (rollout or NN value or fast heuristic)
+      // 3. Evaluate
       let value;
       if (leaf.state.gameOver) {
         value = this.evaluateTerminal(leaf.state, playerId);
       } else if (this.valueFunction) {
+        // NN value head — fast and learned. Fall back to heuristic if NN returns null.
         value = this.valueFunction(leaf.state, playerId);
+        if (value === null || value === undefined || isNaN(value)) {
+          value = this.evaluateState(leaf.state, playerId);
+        }
       } else if (this.fastMode) {
-        value = this.fastRollout(leaf.state, playerId);
+        value = this.evaluateState(leaf.state, playerId);
       } else {
         value = this.rollout(leaf.state, playerId);
       }
@@ -126,7 +146,7 @@ class MCTSEngine {
       simCount++;
     }
 
-    // Extract results
+    // Extract results from root's direct children only
     const rootVisits = {};
     let bestChild = null;
     let bestVisits = -1;
@@ -175,7 +195,8 @@ class MCTSEngine {
   }
 
   /**
-   * Expand: generate macro-actions as children
+   * Expand: generate macro-actions as children.
+   * Uses NN opponent model if available, otherwise smarterAgent.
    */
   expand(node) {
     if (node.state.gameOver) {
@@ -191,20 +212,22 @@ class MCTSEngine {
       priors = this.policyFunction(node.state, node.playerId, macros);
     }
 
-    // Simulate opponent with heuristic (or NN if available)
+    // Get opponent actions — use NN opponent model if available, else smarterAgent
     const opponentId = 1 - node.playerId;
+    let opponentActions;
+    try {
+      if (this.opponentFunction) {
+        opponentActions = this.opponentFunction(node.state, opponentId);
+      } else {
+        opponentActions = smarterAgent.generateActions(node.state, opponentId);
+      }
+    } catch {
+      opponentActions = [];
+    }
 
     for (let i = 0; i < macros.length; i++) {
       const macro = macros[i];
       const prior = priors ? priors[i] : 1 / macros.length;
-
-      // Simulate this turn: our macro-action vs opponent's heuristic response
-      let opponentActions;
-      try {
-        opponentActions = smarterAgent.generateActions(node.state, opponentId);
-      } catch {
-        opponentActions = [];
-      }
 
       const actionMap = {
         player0: node.playerId === 0 ? macro.actions : opponentActions,
@@ -213,7 +236,7 @@ class MCTSEngine {
 
       try {
         const result = logic.processTurn(node.state, actionMap);
-        const child = new MCTSNode(result.newState, node.playerId, node, macro, prior);
+        const child = new MCTSNode(result.newState, node.playerId, node, macro, prior, node.depth + 1);
         node.children.push(child);
       } catch {
         // Skip invalid macro combinations
@@ -224,8 +247,7 @@ class MCTSEngine {
   }
 
   /**
-   * Fast rollout: simulate forward with lightweight heuristic.
-   * Uses smarterAgent but limits rollout depth for speed.
+   * Rollout: simulate forward with heuristic or NN.
    */
   rollout(state, playerId) {
     let currentState = state;
@@ -236,11 +258,17 @@ class MCTSEngine {
 
       let myActions, oppActions;
       try {
-        myActions = smarterAgent.generateActions(currentState, playerId);
-      } catch { myActions = []; }
-      try {
-        oppActions = smarterAgent.generateActions(currentState, opponentId);
-      } catch { oppActions = []; }
+        if (this.opponentFunction) {
+          myActions = this.opponentFunction(currentState, playerId);
+          oppActions = this.opponentFunction(currentState, opponentId);
+        } else {
+          myActions = smarterAgent.generateActions(currentState, playerId);
+          oppActions = smarterAgent.generateActions(currentState, opponentId);
+        }
+      } catch {
+        myActions = [];
+        oppActions = [];
+      }
 
       try {
         const result = logic.processTurn(currentState, {
@@ -253,15 +281,12 @@ class MCTSEngine {
       }
     }
 
+    // Use NN value if available, else heuristic
+    if (this.valueFunction) {
+      const nnVal = this.valueFunction(currentState, playerId);
+      if (nnVal !== null && nnVal !== undefined && !isNaN(nnVal)) return nnVal;
+    }
     return this.evaluateState(currentState, playerId);
-  }
-
-  /**
-   * Ultra-fast rollout: no simulation, just evaluate current position.
-   * Use this when speed matters more than accuracy (high sim count).
-   */
-  fastRollout(state, playerId) {
-    return this.evaluateState(state, playerId);
   }
 
   /**
@@ -349,6 +374,7 @@ class MCTSEngine {
    * Backpropagate value up the tree
    */
   backpropagate(node, value) {
+    if (!isFinite(value)) value = 0.5; // Safety: never propagate NaN/Infinity
     while (node) {
       node.visits++;
       node.totalValue += value;

@@ -88,10 +88,10 @@ async function main() {
     let generateCmd = `node mcts-generate.js ${GAMES_PER_ITER} ${MODE} ${SIMS_PER_TURN}`;
 
     if (hasNN) {
-      // For NN-guided MCTS, we'd set an env var (not yet implemented in mcts-generate)
-      // For now, the NN improves the deployed agent, and MCTS data gets progressively better
-      // because MCTS evaluates against opponents that include the NN agent
-      console.log(`  [Using NN from iteration ${iter - 1} for evaluation]`);
+      // Pass NN weights path as extra CLI arg — use forward slashes for Windows shell safety
+      const safeWeightsPath = weightsFile.replace(/\\/g, '/');
+      generateCmd += ` "${safeWeightsPath}"`;
+      console.log(`  [NN-guided MCTS: using weights from iteration ${iter - 1}]`);
     }
 
     const genSuccess = runCommand(generateCmd, `Step 1: Generate MCTS data (${GAMES_PER_ITER} games, ${SIMS_PER_TURN} sims/turn)`);
@@ -107,10 +107,10 @@ async function main() {
       break;
     }
 
-    const dataArgs = allData.map(f => `"${f}"`).join(' ');
     const epochs = iter === 1 ? 100 : 50; // More epochs for first iteration
-
-    const trainCmd = `python train_nn.py ${dataArgs} --epochs ${epochs} --output "${modelDir}"`;
+    const safeModelDir = modelDir.replace(/\\/g, '/');
+    const safeDataArgs = allData.map(f => `"${f.replace(/\\/g, '/')}"`).join(' ');
+    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --output "${safeModelDir}"`;
     const trainSuccess = runCommand(trainCmd, `Step 2: Train NN on ${allData.length} data files (${epochs} epochs)`);
     if (!trainSuccess) {
       console.error('Training failed. Stopping.');

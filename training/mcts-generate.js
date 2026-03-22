@@ -34,7 +34,52 @@ const args = process.argv.slice(2);
 const NUM_GAMES = parseInt(args[0]) || 20;
 const MODE = args[1] || 'tournament';
 const SIMS_PER_TURN = parseInt(args[2]) || 500;
-const ROLLOUT_DEPTH = 4; // Keep shallow for speed — deep rollouts are too slow
+const ROLLOUT_DEPTH = 4;
+// 4th arg = NN weights path (passed by self-play-loop.js for iterations 2+)
+const NN_WEIGHTS_PATH = args[3] || path.join(__dirname, 'models', 'civclash_agent_weights.json');
+
+// ============================================================
+// Load NN if available (for iterations 2+)
+// ============================================================
+let nnValueFunction = null;
+let nnOpponentFunction = null;
+
+try {
+  if (fs.existsSync(NN_WEIGHTS_PATH)) {
+    const nnAgent = require('../agents/nnAgent');
+    // Explicitly load from the correct path (not nnAgent's default)
+    const loaded = nnAgent.loadWeights(NN_WEIGHTS_PATH);
+
+    if (loaded) {
+      console.log(`[NN-MCTS] Loaded NN weights from ${NN_WEIGHTS_PATH}`);
+      console.log(`[NN-MCTS] MCTS will use NN value head + NN as opponent model`);
+
+      // Value function: state → win probability [0, 1]
+      nnValueFunction = (state, playerId) => {
+        try {
+          return nnAgent.getValueEstimate(state, playerId);
+        } catch {
+          return null;
+        }
+      };
+
+      // Opponent function: use NN to model opponent instead of smarterAgent
+      nnOpponentFunction = (state, playerId) => {
+        try {
+          return nnAgent.generateActions(state, playerId);
+        } catch {
+          return smarterAgent.generateActions(state, playerId);
+        }
+      };
+    } else {
+      console.log(`[NN-MCTS] Failed to load NN from ${NN_WEIGHTS_PATH}, using pure heuristic`);
+    }
+  } else {
+    console.log(`[NN-MCTS] No weights file at ${NN_WEIGHTS_PATH}, using pure heuristic MCTS`);
+  }
+} catch (e) {
+  console.log(`[NN-MCTS] No NN available (${e.message}), using pure heuristic MCTS`);
+}
 
 // Opponents for MCTS to play against — only the strongest
 const OPPONENTS = [
@@ -210,8 +255,10 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   const engine = new MCTSEngine({
     simulations: SIMS_PER_TURN,
     rolloutDepth: ROLLOUT_DEPTH,
-    timeLimitMs: 200, // Cap each turn at 200ms for speed
+    timeLimitMs: 200,
     cExplore: 1.41,
+    valueFunction: nnValueFunction,          // NN value head if available
+    opponentFunction: nnOpponentFunction,    // NN opponent model if available
   });
 
   let state = logic.createInitialState({ mode });
@@ -236,12 +283,14 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
     } catch { mctsResult = { actions: [], rootVisits: {}, timeMs: 0 }; }
     totalSimTime += mctsResult.timeMs;
 
-    // Record for training
-    turnRecords.push({
-      turn: state.turn,
-      features: encodeStateForNN(state, mctsTeam),
-      targets: encodeVisitsForNN(mctsResult.rootVisits, mctsResult.actions, state, mctsTeam),
-    });
+    // Record for training — only if MCTS produced real actions (not garbage)
+    if (mctsResult.actions.length > 0) {
+      turnRecords.push({
+        turn: state.turn,
+        features: encodeStateForNN(state, mctsTeam),
+        targets: encodeVisitsForNN(mctsResult.rootVisits, mctsResult.actions, state, mctsTeam),
+      });
+    }
 
     // Opponent plays heuristic
     let oppActions;
@@ -280,7 +329,7 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
     opponent: opponentName,
     turns: turnRecords,
     totalTurns: state.turn,
-    avgSimTimeMs: Math.round(totalSimTime / state.turn),
+    avgSimTimeMs: state.turn > 0 ? Math.round(totalSimTime / state.turn) : 0,
   };
 }
 
@@ -288,8 +337,12 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
 // Run MCTS self-play (both sides use MCTS)
 // ============================================================
 function runMCTSSelfPlay(mode) {
-  const engine0 = new MCTSEngine({ simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, timeLimitMs: 200, cExplore: 1.41 });
-  const engine1 = new MCTSEngine({ simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, timeLimitMs: 200, cExplore: 1.41 });
+  const engineOpts = {
+    simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, timeLimitMs: 200, cExplore: 1.41,
+    valueFunction: nnValueFunction, opponentFunction: nnOpponentFunction,
+  };
+  const engine0 = new MCTSEngine(engineOpts);
+  const engine1 = new MCTSEngine(engineOpts);
 
   let state = logic.createInitialState({ mode });
   const turnRecords0 = [];
@@ -307,17 +360,21 @@ function runMCTSSelfPlay(mode) {
     try { result0 = engine0.search(state, 0); } catch { result0 = { actions: [], rootVisits: {}, timeMs: 0 }; }
     try { result1 = engine1.search(state, 1); } catch { result1 = { actions: [], rootVisits: {}, timeMs: 0 }; }
 
-    // Record both sides
-    turnRecords0.push({
-      turn: state.turn,
-      features: encodeStateForNN(state, 0),
-      targets: encodeVisitsForNN(result0.rootVisits, result0.actions, state, 0),
-    });
-    turnRecords1.push({
-      turn: state.turn,
-      features: encodeStateForNN(state, 1),
-      targets: encodeVisitsForNN(result1.rootVisits, result1.actions, state, 1),
-    });
+    // Record both sides — only if MCTS produced real actions
+    if (result0.actions.length > 0) {
+      turnRecords0.push({
+        turn: state.turn,
+        features: encodeStateForNN(state, 0),
+        targets: encodeVisitsForNN(result0.rootVisits, result0.actions, state, 0),
+      });
+    }
+    if (result1.actions.length > 0) {
+      turnRecords1.push({
+        turn: state.turn,
+        features: encodeStateForNN(state, 1),
+        targets: encodeVisitsForNN(result1.rootVisits, result1.actions, state, 1),
+      });
+    }
 
     const actionMap = { player0: result0.actions, player1: result1.actions };
     try {
@@ -425,22 +482,33 @@ function main() {
       const result = runMCTSSelfPlay(MODE);
 
       // Save BOTH sides with value labels
-      const winnerTurns = result.winner === 0 ? result.turns0 : result.turns1;
-      const loserTurns = result.winner === 0 ? result.turns1 : result.turns0;
+      if (result.winner === -1) {
+        // Tie: both sides get 0.5
+        for (const turn of [...result.turns0, ...result.turns1]) {
+          nnStream.write(JSON.stringify({
+            features: turn.features, targets: turn.targets,
+            turn: turn.turn, value: 0.5,
+          }) + '\n');
+          stats.examples++;
+        }
+      } else {
+        const winnerTurns = result.winner === 0 ? result.turns0 : result.turns1;
+        const loserTurns = result.winner === 0 ? result.turns1 : result.turns0;
 
-      for (const turn of winnerTurns) {
-        nnStream.write(JSON.stringify({
-          features: turn.features, targets: turn.targets,
-          turn: turn.turn, value: 1.0,
-        }) + '\n');
-        stats.examples++;
-      }
-      for (const turn of loserTurns) {
-        nnStream.write(JSON.stringify({
-          features: turn.features, targets: turn.targets,
-          turn: turn.turn, value: 0.0,
-        }) + '\n');
-        stats.examples++;
+        for (const turn of winnerTurns) {
+          nnStream.write(JSON.stringify({
+            features: turn.features, targets: turn.targets,
+            turn: turn.turn, value: 1.0,
+          }) + '\n');
+          stats.examples++;
+        }
+        for (const turn of loserTurns) {
+          nnStream.write(JSON.stringify({
+            features: turn.features, targets: turn.targets,
+            turn: turn.turn, value: 0.0,
+          }) + '\n');
+          stats.examples++;
+        }
       }
 
       console.log(`\n  ${result.score0}-${result.score1} (winner: ${result.winner === -1 ? 'tie' : 'player ' + result.winner})`);
