@@ -1,90 +1,74 @@
 /**
- * MCTS Dataset Generator
+ * MCTS Dataset Generator (with Worker Threads)
  *
  * Runs MCTS with high simulation counts to generate expert data.
- * MCTS searches deeply and finds moves heuristic bots can't.
- * The data is used to train a neural network (knowledge distillation).
+ * Supports parallel game generation via worker threads.
  *
  * Usage:
- *   node mcts-generate.js [numGames] [mode] [simsPerTurn]
+ *   node mcts-generate.js [numGames] [mode] [simsPerTurn] [nnWeightsPath] [--workers=N] [--no-workers]
  *
  * Examples:
- *   node mcts-generate.js 10 tournament 500   # 10 games, 500 sims/turn
- *   node mcts-generate.js 50 blitz 200        # 50 blitz games, 200 sims
- *   node mcts-generate.js                     # defaults: 20 tournament, 500 sims
+ *   node mcts-generate.js 50 tournament 300             # 50 games, auto worker count
+ *   node mcts-generate.js 50 tournament 300 --workers=4 # 4 workers
+ *   node mcts-generate.js 20 tournament 500 --no-workers # sequential mode
  *
  * Output:
- *   training/data/mcts_nn_<timestamp>.jsonl - NN training data (features + visit distributions)
+ *   training/data/mcts_nn_<timestamp>.jsonl - NN training data
  *   training/data/mcts_raw_<timestamp>.jsonl - Game summaries
  */
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const { Worker } = require('worker_threads');
 const logic = require('../logic');
 const { MCTSEngine } = require('../agents/mctsEngine');
 const smarterAgent = require('../agents/smarterAgent');
+const { encodeStateForNN, encodeVisitsForNN } = require('./mcts-encoding');
 
-const {
-  UNIT_TYPES, UNIT_STATS, ECONOMY, TERRAIN,
-  chebyshevDistance, getConnectedTerritory, getTilesAtDistance1, isInZoC, getCityCost,
-} = require('../logic');
-
-// Parse args
+// Parse args — separate positional from flags
 const args = process.argv.slice(2);
-const NUM_GAMES = parseInt(args[0]) || 20;
-const MODE = args[1] || 'tournament';
-const SIMS_PER_TURN = parseInt(args[2]) || 500;
+const positionalArgs = args.filter(a => !a.startsWith('--'));
+const NUM_GAMES = parseInt(positionalArgs[0]) || 20;
+const MODE = positionalArgs[1] || 'tournament';
+const SIMS_PER_TURN = parseInt(positionalArgs[2]) || 500;
 const ROLLOUT_DEPTH = 4;
-// 4th arg = NN weights path (passed by self-play-loop.js for iterations 2+)
-const NN_WEIGHTS_PATH = args[3] || path.join(__dirname, 'models', 'civclash_agent_weights.json');
+const NN_WEIGHTS_PATH = positionalArgs[3] || path.join(__dirname, 'models', 'civclash_agent_weights.json');
+
+const NO_WORKERS = args.includes('--no-workers');
+const WORKER_COUNT_FLAG = args.find(a => a.startsWith('--workers='));
+const MAX_WORKERS = WORKER_COUNT_FLAG
+  ? parseInt(WORKER_COUNT_FLAG.split('=')[1])
+  : Math.min(os.cpus().length - 1, 6);
+const USE_WORKERS = !NO_WORKERS && MAX_WORKERS > 1 && NUM_GAMES > 1;
 
 // ============================================================
-// Load NN if available (for iterations 2+)
+// Load NN for sequential mode (workers load their own)
 // ============================================================
 let nnValueFunction = null;
-let nnOpponentFunction = null;
 
-try {
-  if (fs.existsSync(NN_WEIGHTS_PATH)) {
-    const nnAgent = require('../agents/nnAgent');
-    // Explicitly load from the correct path (not nnAgent's default)
-    const loaded = nnAgent.loadWeights(NN_WEIGHTS_PATH);
-
-    if (loaded) {
-      console.log(`[NN-MCTS] Loaded NN weights from ${NN_WEIGHTS_PATH}`);
-      console.log(`[NN-MCTS] MCTS will use NN value head + NN as opponent model`);
-
-      // Value function: state → win probability [0, 1]
-      nnValueFunction = (state, playerId) => {
-        try {
-          return nnAgent.getValueEstimate(state, playerId);
-        } catch {
-          return null;
-        }
-      };
-
-      // Opponent function: use NN to model opponent instead of smarterAgent
-      nnOpponentFunction = (state, playerId) => {
-        try {
-          return nnAgent.generateActions(state, playerId);
-        } catch {
-          return smarterAgent.generateActions(state, playerId);
-        }
-      };
+if (!USE_WORKERS) {
+  try {
+    if (fs.existsSync(NN_WEIGHTS_PATH)) {
+      const nnAgent = require('../agents/nnAgent');
+      const loaded = nnAgent.loadWeights(NN_WEIGHTS_PATH);
+      if (loaded) {
+        console.log(`[NN-MCTS] Loaded NN weights from ${NN_WEIGHTS_PATH}`);
+        console.log(`[NN-MCTS] MCTS will use NN value head (smarterAgent as opponent model)`);
+        nnValueFunction = (state, playerId) => {
+          try { return nnAgent.getValueEstimate(state, playerId); }
+          catch { return null; }
+        };
+      } else {
+        console.log(`[NN-MCTS] Failed to load NN from ${NN_WEIGHTS_PATH}, using pure heuristic`);
+      }
     } else {
-      console.log(`[NN-MCTS] Failed to load NN from ${NN_WEIGHTS_PATH}, using pure heuristic`);
+      console.log(`[NN-MCTS] No weights file at ${NN_WEIGHTS_PATH}, using pure heuristic MCTS`);
     }
-  } else {
-    console.log(`[NN-MCTS] No weights file at ${NN_WEIGHTS_PATH}, using pure heuristic MCTS`);
+  } catch (e) {
+    console.log(`[NN-MCTS] No NN available (${e.message}), using pure heuristic MCTS`);
   }
-} catch (e) {
-  console.log(`[NN-MCTS] No NN available (${e.message}), using pure heuristic MCTS`);
 }
-
-// Opponents for MCTS to play against — only the strongest
-const OPPONENTS = [
-  { name: 'smarter', fn: smarterAgent },
-];
 
 // Output
 const dataDir = path.join(__dirname, 'data');
@@ -95,161 +79,7 @@ const nnFile = path.join(dataDir, `mcts_nn_${timestamp}.jsonl`);
 const rawFile = path.join(dataDir, `mcts_raw_${timestamp}.jsonl`);
 
 // ============================================================
-// Feature encoding (same as generate-expert-data.js)
-// ============================================================
-function encodeStateForNN(state, playerId) {
-  const player = state.players.find(p => p.id === playerId);
-  const opponent = state.players.find(p => p.id !== playerId);
-  const myUnits = state.units.filter(u => u.owner === playerId);
-  const enemyUnits = state.units.filter(u => u.owner !== playerId);
-  const myCities = state.cities.filter(c => c.owner === playerId);
-  const enemyCities = state.cities.filter(c => c.owner !== null && c.owner !== playerId);
-  const myTiles = state.map.tiles.filter(t => t.owner === playerId).length;
-  const enemyTiles = state.map.tiles.filter(t => t.owner !== null && t.owner !== playerId).length;
-
-  const mySoldiers = myUnits.filter(u => u.type === 'SOLDIER').length;
-  const myArchers = myUnits.filter(u => u.type === 'ARCHER').length;
-  const myRaiders = myUnits.filter(u => u.type === 'RAIDER').length;
-  const enemySoldiers = enemyUnits.filter(u => u.type === 'SOLDIER').length;
-  const enemyArchers = enemyUnits.filter(u => u.type === 'ARCHER').length;
-  const enemyRaiders = enemyUnits.filter(u => u.type === 'RAIDER').length;
-
-  const monuments = state.monuments || [];
-  const myMonuments = monuments.filter(m => m.controlledBy === playerId).length;
-  const enemyMonuments = monuments.filter(m => m.controlledBy !== null && m.controlledBy !== playerId).length;
-
-  const W = state.map.width, H = state.map.height, maxTiles = W * H;
-
-  let myUnitCenterX = 0, myUnitCenterY = 0;
-  if (myUnits.length > 0) {
-    myUnitCenterX = myUnits.reduce((s, u) => s + u.x, 0) / myUnits.length;
-    myUnitCenterY = myUnits.reduce((s, u) => s + u.y, 0) / myUnits.length;
-  }
-  let enemyUnitCenterX = 0, enemyUnitCenterY = 0;
-  if (enemyUnits.length > 0) {
-    enemyUnitCenterX = enemyUnits.reduce((s, u) => s + u.x, 0) / enemyUnits.length;
-    enemyUnitCenterY = enemyUnits.reduce((s, u) => s + u.y, 0) / enemyUnits.length;
-  }
-
-  let avgArmyDist = W;
-  if (myUnits.length > 0 && enemyUnits.length > 0) {
-    let totalDist = 0, pairs = 0;
-    for (const u of myUnits) {
-      for (const e of enemyUnits) {
-        totalDist += chebyshevDistance(u.x, u.y, e.x, e.y);
-        pairs++;
-      }
-    }
-    avgArmyDist = totalDist / pairs;
-  }
-
-  let myDistToMonument = W, enemyDistToMonument = W;
-  if (monuments.length > 0) {
-    if (myUnits.length > 0) myDistToMonument = Math.min(...myUnits.flatMap(u => monuments.map(m => chebyshevDistance(u.x, u.y, m.x, m.y))));
-    if (enemyUnits.length > 0) enemyDistToMonument = Math.min(...enemyUnits.flatMap(u => monuments.map(m => chebyshevDistance(u.x, u.y, m.x, m.y))));
-  }
-
-  const excess = Math.max(0, myUnits.length - myCities.length);
-  const enemyExcess = Math.max(0, enemyUnits.length - enemyCities.length);
-
-  const features = [
-    state.turn / state.maxTurns,
-    player.gold / 500, player.income / 50, player.score / 1000,
-    opponent.gold / 500, opponent.income / 50, opponent.score / 1000,
-    myTiles / maxTiles, enemyTiles / maxTiles, (myTiles - enemyTiles) / maxTiles,
-    mySoldiers / 10, myArchers / 10, myRaiders / 10, myUnits.length / 20,
-    enemySoldiers / 10, enemyArchers / 10, enemyRaiders / 10, enemyUnits.length / 20,
-    myCities.length / 6, enemyCities.length / 6,
-    myMonuments / 3, enemyMonuments / 3,
-    monuments.length > 0 ? (myMonuments - enemyMonuments) / monuments.length : 0,
-    excess / 10, enemyExcess / 10,
-    myUnitCenterX / W, myUnitCenterY / H,
-    enemyUnitCenterX / W, enemyUnitCenterY / H,
-    avgArmyDist / W, myDistToMonument / W, enemyDistToMonument / W,
-  ];
-
-  const MAX_UNITS = 20;
-  for (let i = 0; i < MAX_UNITS; i++) {
-    if (i < myUnits.length) {
-      const u = myUnits[i];
-      features.push(
-        u.type === 'SOLDIER' ? 1 : 0, u.type === 'ARCHER' ? 1 : 0, u.type === 'RAIDER' ? 1 : 0,
-        u.x / W, u.y / H, u.hp / 2, (u.canMove ?? u.can_move_next_turn ?? true) ? 1 : 0,
-      );
-    } else features.push(0, 0, 0, 0, 0, 0, 0);
-  }
-
-  for (let i = 0; i < MAX_UNITS; i++) {
-    if (i < enemyUnits.length) {
-      const u = enemyUnits[i];
-      features.push(u.type === 'SOLDIER' ? 1 : 0, u.type === 'ARCHER' ? 1 : 0, u.type === 'RAIDER' ? 1 : 0, u.x / W, u.y / H);
-    } else features.push(0, 0, 0, 0, 0);
-  }
-
-  const MAX_CITIES = 6;
-  for (let i = 0; i < MAX_CITIES; i++) {
-    if (i < myCities.length) {
-      const c = myCities[i];
-      features.push(c.x / W, c.y / H, !state.units.some(u => u.x === c.x && u.y === c.y) ? 1 : 0);
-    } else features.push(0, 0, 0);
-  }
-
-  return features;
-}
-
-// ============================================================
-// Encode MCTS visit distribution as NN targets
-// ============================================================
-function encodeVisitsForNN(rootVisits, selectedActions, state, playerId) {
-  const myUnits = state.units.filter(u => u.owner === playerId);
-  const myCities = state.cities.filter(c => c.owner === playerId);
-  const MAX_UNITS = 20, MAX_CITIES = 6;
-
-  // Convert visit counts to probability distribution
-  const entries = Object.entries(rootVisits);
-  const totalVisits = entries.reduce((s, [, v]) => s + v.visits, 0) || 1;
-  const visitDistribution = {};
-  for (const [name, data] of entries) {
-    visitDistribution[name] = data.visits / totalVisits;
-  }
-
-  // Extract build/move/expand decisions from the selected (most-visited) macro-action
-  const buildDecisions = new Array(MAX_CITIES).fill(0);
-  const moveDecisions = new Array(MAX_UNITS).fill(0);
-  let expandCount = 0;
-  let buildCity = 0;
-
-  for (const a of selectedActions) {
-    if (a.action === 'BUILD_UNIT') {
-      const cityIdx = myCities.findIndex(c => c.x === a.city_x && c.y === a.city_y);
-      if (cityIdx >= 0 && cityIdx < MAX_CITIES) {
-        buildDecisions[cityIdx] = a.unit_type === 'SOLDIER' ? 1 : a.unit_type === 'ARCHER' ? 2 : 3;
-      }
-    }
-    if (a.action === 'MOVE') {
-      const unitIdx = myUnits.findIndex(u => u.x === a.from_x && u.y === a.from_y);
-      if (unitIdx >= 0 && unitIdx < MAX_UNITS) {
-        const dx = Math.sign(a.to_x - a.from_x);
-        const dy = Math.sign(a.to_y - a.from_y);
-        const dirMap = { '0,0': 0, '0,-1': 1, '1,-1': 2, '1,0': 3, '1,1': 4, '0,1': 5, '-1,1': 6, '-1,0': 7, '-1,-1': 8 };
-        moveDecisions[unitIdx] = dirMap[`${dx},${dy}`] || 0;
-      }
-    }
-    if (a.action === 'EXPAND_TERRITORY') expandCount++;
-    if (a.action === 'BUILD_CITY') buildCity = 1;
-  }
-
-  return {
-    buildDecisions,
-    moveDecisions,
-    expandCount: Math.min(15, expandCount),
-    buildCity,
-    visitDistribution,   // Full MCTS visit distribution (richer signal)
-  };
-}
-
-// ============================================================
-// Run one MCTS game
+// Sequential game functions (fallback when --no-workers)
 // ============================================================
 function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   const engine = new MCTSEngine({
@@ -257,33 +87,29 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
     rolloutDepth: ROLLOUT_DEPTH,
     timeLimitMs: 200,
     cExplore: 1.41,
-    valueFunction: nnValueFunction,          // NN value head if available
-    opponentFunction: nnOpponentFunction,    // NN opponent model if available
+    valueFunction: nnValueFunction,
+    // opponentFunction: null — use smarterAgent (matches actual game opponent)
   });
 
   let state = logic.createInitialState({ mode });
   const turnRecords = [];
   const opponentId = 1 - mctsTeam;
   let totalSimTime = 0;
-
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 120_000; // 2 min max per game
+  const MAX_GAME_TIME_MS = 120_000;
 
   while (!state.gameOver) {
-    // Hard timeout — abort game if it takes too long
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
       console.log(`\n  TIMEOUT after ${state.turn} turns`);
       break;
     }
 
-    // MCTS player
     let mctsResult;
     try {
       mctsResult = engine.search(state, mctsTeam);
     } catch { mctsResult = { actions: [], rootVisits: {}, timeMs: 0 }; }
     totalSimTime += mctsResult.timeMs;
 
-    // Record for training — only if MCTS produced real actions (not garbage)
     if (mctsResult.actions.length > 0) {
       turnRecords.push({
         turn: state.turn,
@@ -292,7 +118,6 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
       });
     }
 
-    // Opponent plays heuristic
     let oppActions;
     try {
       oppActions = opponentAgent.generateActions(state, opponentId);
@@ -311,7 +136,6 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
       break;
     }
 
-    // Progress logging — every 10 turns so user sees it moving
     if (state.turn % 10 === 0) {
       const me = state.players[mctsTeam];
       const opp = state.players[opponentId];
@@ -324,8 +148,7 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
 
   return {
     won: mctsScore > oppScore,
-    mctsScore,
-    oppScore,
+    mctsScore, oppScore,
     opponent: opponentName,
     turns: turnRecords,
     totalTurns: state.turn,
@@ -333,13 +156,10 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   };
 }
 
-// ============================================================
-// Run MCTS self-play (both sides use MCTS)
-// ============================================================
 function runMCTSSelfPlay(mode) {
   const engineOpts = {
     simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, timeLimitMs: 200, cExplore: 1.41,
-    valueFunction: nnValueFunction, opponentFunction: nnOpponentFunction,
+    valueFunction: nnValueFunction,
   };
   const engine0 = new MCTSEngine(engineOpts);
   const engine1 = new MCTSEngine(engineOpts);
@@ -348,7 +168,7 @@ function runMCTSSelfPlay(mode) {
   const turnRecords0 = [];
   const turnRecords1 = [];
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 180_000; // 3 min max for self-play
+  const MAX_GAME_TIME_MS = 180_000;
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
@@ -360,7 +180,6 @@ function runMCTSSelfPlay(mode) {
     try { result0 = engine0.search(state, 0); } catch { result0 = { actions: [], rootVisits: {}, timeMs: 0 }; }
     try { result1 = engine1.search(state, 1); } catch { result1 = { actions: [], rootVisits: {}, timeMs: 0 }; }
 
-    // Record both sides — only if MCTS produced real actions
     if (result0.actions.length > 0) {
       turnRecords0.push({
         turn: state.turn,
@@ -390,12 +209,10 @@ function runMCTSSelfPlay(mode) {
     }
   }
 
-  const score0 = state.players[0].score;
-  const score1 = state.players[1].score;
-
   return {
-    score0, score1,
-    winner: score0 > score1 ? 0 : score1 > score0 ? 1 : -1,
+    score0: state.players[0].score,
+    score1: state.players[1].score,
+    winner: state.players[0].score > state.players[1].score ? 0 : state.players[1].score > state.players[0].score ? 1 : -1,
     turns0: turnRecords0,
     turns1: turnRecords1,
     totalTurns: state.turn,
@@ -403,121 +220,257 @@ function runMCTSSelfPlay(mode) {
 }
 
 // ============================================================
+// Worker pool
+// ============================================================
+function runWithWorkers(jobs) {
+  return new Promise((resolveAll) => {
+    const workerCount = Math.min(MAX_WORKERS, jobs.length);
+    const workers = [];
+    const results = [];
+    let nextJob = 0;
+    let completed = 0;
+    const total = jobs.length;
+
+    for (let i = 0; i < workerCount; i++) {
+      const w = new Worker(path.join(__dirname, 'mcts-worker.js'));
+
+      w.on('message', (msg) => {
+        if (msg.type === 'log') {
+          process.stdout.write(`[W${i}] ${msg.message}`);
+          return;
+        }
+        if (msg.type === 'game_result') {
+          completed++;
+          const r = msg.result;
+          if (msg.jobType === 'vs_heuristic') {
+            const outcome = r.won ? 'WIN' : 'LOSS';
+            console.log(`  Game ${completed}/${total}: ${outcome} ${r.mctsScore}-${r.oppScore} (${r.totalTurns}t)`);
+          } else {
+            console.log(`  Game ${completed}/${total}: Self-Play ${r.score0}-${r.score1} (${r.totalTurns}t)`);
+          }
+          results.push(msg);
+          dispatchNext(i);
+        }
+        if (msg.type === 'error') {
+          completed++;
+          console.log(`  Game ${completed}/${total}: ERROR - ${msg.error}`);
+          dispatchNext(i);
+        }
+      });
+
+      w.on('error', (err) => {
+        console.error(`Worker ${i} error: ${err.message}`);
+      });
+
+      w.on('exit', (code) => {
+        if (code !== 0 && code !== 1) console.error(`Worker ${i} exited with code ${code}`);
+      });
+
+      workers.push(w);
+    }
+
+    function dispatchNext(workerIdx) {
+      if (nextJob < jobs.length) {
+        workers[workerIdx].postMessage(jobs[nextJob]);
+        nextJob++;
+      } else if (completed >= total) {
+        // All done — terminate workers
+        for (const w of workers) w.terminate();
+        resolveAll(results);
+      }
+    }
+
+    // Dispatch initial batch
+    for (let i = 0; i < workerCount && i < jobs.length; i++) {
+      workers[i].postMessage(jobs[nextJob]);
+      nextJob++;
+    }
+  });
+}
+
+// ============================================================
+// Write game results to streams
+// ============================================================
+function writeGameResult(msg, nnStream, rawStream, stats) {
+  stats.games++;
+
+  if (msg.jobType === 'vs_heuristic') {
+    const r = msg.result;
+    if (r.won) stats.wins++; else stats.losses++;
+    const value = r.won ? 1.0 : 0.0;
+
+    for (const turn of msg.turnRecords) {
+      nnStream.write(JSON.stringify({
+        features: turn.features, targets: turn.targets,
+        turn: turn.turn, value,
+      }) + '\n');
+      stats.examples++;
+    }
+
+    rawStream.write(JSON.stringify({
+      gameId: msg.gameId, type: 'vs_heuristic',
+      opponent: r.opponent, mctsTeam: msg.mctsTeam, won: r.won,
+      mctsScore: r.mctsScore, oppScore: r.oppScore, totalTurns: r.totalTurns,
+    }) + '\n');
+  } else if (msg.jobType === 'self_play') {
+    stats.selfplay++;
+    const r = msg.result;
+
+    if (r.winner === -1) {
+      for (const turn of [...(msg.turnRecords0 || []), ...(msg.turnRecords1 || [])]) {
+        nnStream.write(JSON.stringify({
+          features: turn.features, targets: turn.targets,
+          turn: turn.turn, value: 0.5,
+        }) + '\n');
+        stats.examples++;
+      }
+    } else {
+      const winnerTurns = r.winner === 0 ? (msg.turnRecords0 || []) : (msg.turnRecords1 || []);
+      const loserTurns = r.winner === 0 ? (msg.turnRecords1 || []) : (msg.turnRecords0 || []);
+
+      for (const turn of winnerTurns) {
+        nnStream.write(JSON.stringify({
+          features: turn.features, targets: turn.targets,
+          turn: turn.turn, value: 1.0,
+        }) + '\n');
+        stats.examples++;
+      }
+      for (const turn of loserTurns) {
+        nnStream.write(JSON.stringify({
+          features: turn.features, targets: turn.targets,
+          turn: turn.turn, value: 0.0,
+        }) + '\n');
+        stats.examples++;
+      }
+    }
+
+    rawStream.write(JSON.stringify({
+      gameId: msg.gameId, type: 'self_play',
+      score0: r.score0, score1: r.score1,
+      winner: r.winner, totalTurns: r.totalTurns,
+    }) + '\n');
+  }
+}
+
+// ============================================================
 // Main
 // ============================================================
-function main() {
+async function main() {
+  const hasNN = fs.existsSync(NN_WEIGHTS_PATH);
   console.log('=== MCTS Dataset Generator ===');
   console.log(`Games: ${NUM_GAMES} | Mode: ${MODE} | Sims/turn: ${SIMS_PER_TURN} | Rollout: ${ROLLOUT_DEPTH}`);
+  console.log(`NN: ${hasNN ? NN_WEIGHTS_PATH : 'none (pure heuristic)'}`);
+  console.log(`Workers: ${USE_WORKERS ? MAX_WORKERS : 'disabled (sequential)'}`);
   console.log(`Output: ${nnFile}\n`);
 
   const nnStream = fs.createWriteStream(nnFile);
   const rawStream = fs.createWriteStream(rawFile);
-
   const stats = { games: 0, wins: 0, losses: 0, selfplay: 0, examples: 0 };
 
-  // Split: 90% vs heuristic bots, 10% self-play (self-play is 2x slower)
+  // Build job list
   const vsHeuristicGames = Math.ceil(NUM_GAMES * 0.9);
   const selfPlayGames = NUM_GAMES - vsHeuristicGames;
+  const jobs = [];
+  let gameId = 0;
 
-  // --- MCTS vs Heuristic Bots ---
-  console.log(`--- Phase 1: MCTS vs Heuristic Bots (${vsHeuristicGames} games) ---\n`);
-  const gamesPerOpp = Math.ceil(vsHeuristicGames / OPPONENTS.length);
+  for (let g = 0; g < vsHeuristicGames; g++) {
+    gameId++;
+    jobs.push({
+      type: 'run_game', gameId, jobType: 'vs_heuristic',
+      opponentName: 'smarter', mode: MODE, mctsTeam: g % 2,
+      nnWeightsPath: hasNN ? NN_WEIGHTS_PATH : null,
+      simsPerTurn: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH,
+    });
+  }
 
-  for (const opp of OPPONENTS) {
-    for (let g = 0; g < gamesPerOpp; g++) {
-      if (stats.games >= vsHeuristicGames) break;
+  for (let g = 0; g < selfPlayGames; g++) {
+    gameId++;
+    jobs.push({
+      type: 'run_game', gameId, jobType: 'self_play',
+      mode: MODE, nnWeightsPath: hasNN ? NN_WEIGHTS_PATH : null,
+      simsPerTurn: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH,
+    });
+  }
+
+  if (USE_WORKERS) {
+    // --- Parallel mode ---
+    console.log(`--- Running ${jobs.length} games with ${Math.min(MAX_WORKERS, jobs.length)} workers ---\n`);
+    const results = await runWithWorkers(jobs);
+
+    // Write results sorted by gameId
+    results.sort((a, b) => a.gameId - b.gameId);
+    for (const msg of results) {
+      writeGameResult(msg, nnStream, rawStream, stats);
+    }
+  } else {
+    // --- Sequential mode (original behavior) ---
+    console.log(`--- Phase 1: MCTS vs Heuristic Bots (${vsHeuristicGames} games) ---\n`);
+
+    for (let g = 0; g < vsHeuristicGames; g++) {
       const mctsTeam = g % 2;
       stats.games++;
+      console.log(`Game ${stats.games}/${NUM_GAMES}: MCTS(team ${mctsTeam}) vs smarter`);
 
-      console.log(`Game ${stats.games}/${NUM_GAMES}: MCTS(team ${mctsTeam}) vs ${opp.name}`);
+      const result = runMCTSGame(smarterAgent, 'smarter', MODE, mctsTeam);
 
-      const result = runMCTSGame(opp.fn, opp.name, MODE, mctsTeam);
-
-      if (result.won) {
-        stats.wins++;
-        // Save winning game data
-        for (const turn of result.turns) {
-          nnStream.write(JSON.stringify({
-            features: turn.features,
-            targets: turn.targets,
-            turn: turn.turn,
-            value: 1.0, // Won the game
-          }) + '\n');
-          stats.examples++;
-        }
-        console.log(`\n  WIN ${result.mctsScore}-${result.oppScore} (${result.totalTurns} turns, avg ${result.avgSimTimeMs}ms/turn)`);
-      } else {
-        stats.losses++;
-        // Save losing data with value=0 (still useful for value head)
-        for (const turn of result.turns) {
-          nnStream.write(JSON.stringify({
-            features: turn.features,
-            targets: turn.targets,
-            turn: turn.turn,
-            value: 0.0,
-          }) + '\n');
-          stats.examples++;
-        }
-        console.log(`\n  LOSS ${result.mctsScore}-${result.oppScore}`);
+      const value = result.won ? 1.0 : 0.0;
+      if (result.won) stats.wins++; else stats.losses++;
+      for (const turn of result.turns) {
+        nnStream.write(JSON.stringify({
+          features: turn.features, targets: turn.targets,
+          turn: turn.turn, value,
+        }) + '\n');
+        stats.examples++;
       }
+      console.log(`\n  ${result.won ? 'WIN' : 'LOSS'} ${result.mctsScore}-${result.oppScore} (${result.totalTurns} turns, avg ${result.avgSimTimeMs}ms/turn)`);
 
       rawStream.write(JSON.stringify({
         gameId: stats.games, type: 'vs_heuristic',
-        opponent: opp.name, mctsTeam, won: result.won,
+        opponent: 'smarter', mctsTeam, won: result.won,
         mctsScore: result.mctsScore, oppScore: result.oppScore,
         totalTurns: result.totalTurns,
       }) + '\n');
     }
-  }
 
-  // --- MCTS Self-Play ---
-  if (selfPlayGames > 0) {
-    console.log(`\n--- Phase 2: MCTS Self-Play (${selfPlayGames} games) ---\n`);
+    if (selfPlayGames > 0) {
+      console.log(`\n--- Phase 2: MCTS Self-Play (${selfPlayGames} games) ---\n`);
 
-    for (let g = 0; g < selfPlayGames; g++) {
-      stats.games++;
-      stats.selfplay++;
-      console.log(`Game ${stats.games}/${NUM_GAMES}: MCTS Self-Play`);
+      for (let g = 0; g < selfPlayGames; g++) {
+        stats.games++;
+        stats.selfplay++;
+        console.log(`Game ${stats.games}/${NUM_GAMES}: MCTS Self-Play`);
 
-      const result = runMCTSSelfPlay(MODE);
+        const result = runMCTSSelfPlay(MODE);
 
-      // Save BOTH sides with value labels
-      if (result.winner === -1) {
-        // Tie: both sides get 0.5
-        for (const turn of [...result.turns0, ...result.turns1]) {
-          nnStream.write(JSON.stringify({
-            features: turn.features, targets: turn.targets,
-            turn: turn.turn, value: 0.5,
-          }) + '\n');
-          stats.examples++;
+        if (result.winner === -1) {
+          for (const turn of [...result.turns0, ...result.turns1]) {
+            nnStream.write(JSON.stringify({
+              features: turn.features, targets: turn.targets,
+              turn: turn.turn, value: 0.5,
+            }) + '\n');
+            stats.examples++;
+          }
+        } else {
+          const winnerTurns = result.winner === 0 ? result.turns0 : result.turns1;
+          const loserTurns = result.winner === 0 ? result.turns1 : result.turns0;
+          for (const turn of winnerTurns) {
+            nnStream.write(JSON.stringify({ features: turn.features, targets: turn.targets, turn: turn.turn, value: 1.0 }) + '\n');
+            stats.examples++;
+          }
+          for (const turn of loserTurns) {
+            nnStream.write(JSON.stringify({ features: turn.features, targets: turn.targets, turn: turn.turn, value: 0.0 }) + '\n');
+            stats.examples++;
+          }
         }
-      } else {
-        const winnerTurns = result.winner === 0 ? result.turns0 : result.turns1;
-        const loserTurns = result.winner === 0 ? result.turns1 : result.turns0;
 
-        for (const turn of winnerTurns) {
-          nnStream.write(JSON.stringify({
-            features: turn.features, targets: turn.targets,
-            turn: turn.turn, value: 1.0,
-          }) + '\n');
-          stats.examples++;
-        }
-        for (const turn of loserTurns) {
-          nnStream.write(JSON.stringify({
-            features: turn.features, targets: turn.targets,
-            turn: turn.turn, value: 0.0,
-          }) + '\n');
-          stats.examples++;
-        }
+        console.log(`\n  ${result.score0}-${result.score1} (winner: ${result.winner === -1 ? 'tie' : 'player ' + result.winner})`);
+
+        rawStream.write(JSON.stringify({
+          gameId: stats.games, type: 'self_play',
+          score0: result.score0, score1: result.score1,
+          winner: result.winner, totalTurns: result.totalTurns,
+        }) + '\n');
       }
-
-      console.log(`\n  ${result.score0}-${result.score1} (winner: ${result.winner === -1 ? 'tie' : 'player ' + result.winner})`);
-
-      rawStream.write(JSON.stringify({
-        gameId: stats.games, type: 'self_play',
-        score0: result.score0, score1: result.score1,
-        winner: result.winner, totalTurns: result.totalTurns,
-      }) + '\n');
     }
   }
 
@@ -533,4 +486,4 @@ function main() {
   console.log(`\nNext: python train_nn.py ${nnFile}`);
 }
 
-main();
+main().catch(console.error);

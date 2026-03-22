@@ -108,46 +108,46 @@ class CivClashNet(nn.Module):
     def __init__(self, input_dim=290):
         super().__init__()
 
-        # Shared backbone
+        # Shared backbone (1.5M params — ~5ms inference in pure JS, fits 300ms budget)
         self.backbone = nn.Sequential(
-            nn.Linear(input_dim, 512),
+            nn.Linear(input_dim, 1024),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(1024, 512),
             nn.ReLU(),
             nn.Dropout(0.1),
             nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(256, 128),
             nn.ReLU(),
         )
 
         # Policy heads
         self.build_head = nn.Sequential(
-            nn.Linear(128, 64),
+            nn.Linear(256, 64),
             nn.ReLU(),
             nn.Linear(64, MAX_CITIES * NUM_BUILD_OPTIONS),
         )
 
         self.move_head = nn.Sequential(
-            nn.Linear(128, 128),
+            nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, MAX_UNITS * NUM_MOVE_OPTIONS),
         )
 
         self.expand_head = nn.Sequential(
-            nn.Linear(128, 32),
+            nn.Linear(256, 32),
             nn.ReLU(),
             nn.Linear(32, MAX_EXPAND),
         )
 
         self.city_head = nn.Sequential(
-            nn.Linear(128, 16),
+            nn.Linear(256, 16),
             nn.ReLU(),
             nn.Linear(16, 1),
         )
 
         # Value head (predicts win probability)
         self.value_head = nn.Sequential(
-            nn.Linear(128, 64),
+            nn.Linear(256, 64),
             nn.ReLU(),
             nn.Linear(64, 32),
             nn.ReLU(),
@@ -350,7 +350,7 @@ def main():
     parser.add_argument("data", nargs="+", help="JSONL data files (supports glob)")
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--batch", type=int, default=64)
-    parser.add_argument("--lr", type=float, default=0.001)
+    parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--output", default="models", help="Output directory")
     args = parser.parse_args()
 

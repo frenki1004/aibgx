@@ -25,7 +25,7 @@ const fs = require('fs');
 
 const args = process.argv.slice(2);
 const ITERATIONS = parseInt(args[0]) || 3;
-const GAMES_PER_ITER = parseInt(args[1]) || 10;
+const GAMES_PER_ITER = parseInt(args[1]) || 50;
 const SIMS_PER_TURN = parseInt(args[2]) || 500;
 const MODE = 'tournament';
 
@@ -40,7 +40,7 @@ function runCommand(cmd, description) {
   console.log(`\n>>> ${description}`);
   console.log(`    ${cmd}\n`);
   try {
-    execSync(cmd, { stdio: 'inherit', cwd: trainingDir, timeout: 60 * 60 * 1000 }); // 60 min max per command
+    execSync(cmd, { stdio: 'inherit', cwd: trainingDir, timeout: 120 * 60 * 1000 }); // 120 min max per command
     return true;
   } catch (err) {
     console.error(`Command failed: ${err.message}`);
@@ -107,10 +107,10 @@ async function main() {
       break;
     }
 
-    const epochs = iter === 1 ? 100 : 50; // More epochs for first iteration
+    const epochs = iter === 1 ? 150 : 150;
     const safeModelDir = modelDir.replace(/\\/g, '/');
     const safeDataArgs = allData.map(f => `"${f.replace(/\\/g, '/')}"`).join(' ');
-    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --output "${safeModelDir}"`;
+    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --lr 0.0003 --output "${safeModelDir}"`;
     const trainSuccess = runCommand(trainCmd, `Step 2: Train NN on ${allData.length} data files (${epochs} epochs)`);
     if (!trainSuccess) {
       console.error('Training failed. Stopping.');
