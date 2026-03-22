@@ -107,7 +107,7 @@ async function main() {
       break;
     }
 
-    const epochs = iter === 1 ? 150 : 150;
+    const epochs = 75;
     const safeModelDir = modelDir.replace(/\\/g, '/');
     const safeDataArgs = allData.map(f => `"${f.replace(/\\/g, '/')}"`).join(' ');
     const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --lr 0.0003 --output "${safeModelDir}"`;

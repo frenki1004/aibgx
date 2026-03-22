@@ -183,7 +183,7 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
 
     best_val_loss = float("inf")
     patience_counter = 0
-    max_patience = 30
+    max_patience = 20
 
     for epoch in range(epochs):
         model.train()
