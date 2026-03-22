@@ -230,6 +230,17 @@ function scoreMoveEcon(state, unit, tx, ty) {
   const newDist = Math.abs(tx - enemyX);
   score += (curDist - newDist) * 2;
 
+  // Strong monument pull (trained weight: w_monument_guard=50)
+  if (state.monuments) {
+    for (const m of state.monuments) {
+      const curMonDist = chebyshevDistance(unit.x, unit.y, m.x, m.y);
+      const newMonDist = chebyshevDistance(tx, ty, m.x, m.y);
+      if (curMonDist <= 8) {
+        score += (curMonDist - newMonDist) * 12;
+      }
+    }
+  }
+
   return score;
 }
 
@@ -310,9 +321,9 @@ function generateActions(state, playerId) {
   if (!assault) {
     // === ECONOMY PHASE ===
 
-    // 1. Build cities aggressively — target 1 city per ~12 tiles, scaled by map size
+    // 1. Build cities aggressively (trained weight: max_cities=7.7)
     const scale = getMapScale(state);
-    const targetCities = Math.min(Math.floor(6 * scale), Math.floor(myTiles.length / 12) + 1);
+    const targetCities = Math.min(Math.floor(8 * scale), Math.floor(myTiles.length / 10) + 1);
     const cityCostEcon = getCityCost(state, playerId);
     if (myCities.length < targetCities && gold >= cityCostEcon) {
       const locs = getValidCityLocations(state, playerId);
@@ -322,18 +333,22 @@ function generateActions(state, playerId) {
       }
     }
 
-    // 2. Build one garrison soldier per city that doesn't have a nearby defender
-    for (const city of myCities) {
-      const nearbyDefender = myUnits.some(
-        (u) => u.type === UNIT_TYPES.SOLDIER && chebyshevDistance(u.x, u.y, city.x, city.y) <= 2
-      );
-      if (!nearbyDefender && gold >= UNIT_STATS[UNIT_TYPES.SOLDIER].cost) {
-        const builds = getValidBuildsForType(state, playerId, UNIT_TYPES.SOLDIER);
-        const build = builds.find((b) => b.city_x === city.x && b.city_y === city.y);
-        if (build && !citiesUsed.has(`${city.x},${city.y}`)) {
-          actions.push(build);
-          gold -= UNIT_STATS[UNIT_TYPES.SOLDIER].cost;
-          citiesUsed.add(`${city.x},${city.y}`);
+    // 2. Garrison: 2 soldiers per city (trained weight: soldiers_per_city=2)
+    const targetGarrison = myCities.length * 2;
+    const currentSoldiers = myUnits.filter((u) => u.type === UNIT_TYPES.SOLDIER).length;
+    if (currentSoldiers < targetGarrison) {
+      for (const city of myCities) {
+        const nearbyDefenders = myUnits.filter(
+          (u) => u.type === UNIT_TYPES.SOLDIER && chebyshevDistance(u.x, u.y, city.x, city.y) <= 2
+        ).length;
+        if (nearbyDefenders < 2 && gold >= UNIT_STATS[UNIT_TYPES.SOLDIER].cost) {
+          const builds = getValidBuildsForType(state, playerId, UNIT_TYPES.SOLDIER);
+          const build = builds.find((b) => b.city_x === city.x && b.city_y === city.y);
+          if (build && !citiesUsed.has(`${city.x},${city.y}`)) {
+            actions.push(build);
+            gold -= UNIT_STATS[UNIT_TYPES.SOLDIER].cost;
+            citiesUsed.add(`${city.x},${city.y}`);
+          }
         }
       }
     }

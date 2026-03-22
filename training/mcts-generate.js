@@ -24,6 +24,7 @@ const { Worker } = require('worker_threads');
 const logic = require('../logic');
 const { MCTSEngine } = require('../agents/mctsEngine');
 const smarterAgent = require('../agents/smarterAgent');
+const econAgent = require('../agents/econAgent');
 const { encodeStateForNN, encodeVisitsForNN } = require('./mcts-encoding');
 
 // Parse args — separate positional from flags
@@ -433,18 +434,20 @@ async function main() {
   const stats = { games: 0, wins: 0, losses: 0, selfplay: 0, examples: 0 };
 
   // Build job list
-  const vsHeuristicGames = Math.ceil(NUM_GAMES * 0.9);
+  // 40% econ, 40% smarter, 20% self-play
+  const vsHeuristicGames = Math.ceil(NUM_GAMES * 0.8);
   const selfPlayGames = NUM_GAMES - vsHeuristicGames;
   const jobs = [];
   let gameId = 0;
 
+  const opponents = ['econ', 'smarter'];
   for (let g = 0; g < vsHeuristicGames; g++) {
     gameId++;
     jobs.push({
       type: 'run_game',
       gameId,
       jobType: 'vs_heuristic',
-      opponentName: 'smarter',
+      opponentName: opponents[g % opponents.length],
       mode: MODE,
       mctsTeam: g % 2,
       nnWeightsPath: hasNN ? NN_WEIGHTS_PATH : null,
@@ -482,12 +485,18 @@ async function main() {
     // --- Sequential mode (original behavior) ---
     console.log(`--- Phase 1: MCTS vs Heuristic Bots (${vsHeuristicGames} games) ---\n`);
 
+    // 50/50 econ and smarter
+    const seqOpponents = [
+      { agent: econAgent, name: 'econ' },
+      { agent: smarterAgent, name: 'smarter' },
+    ];
     for (let g = 0; g < vsHeuristicGames; g++) {
       const mctsTeam = g % 2;
+      const opp = seqOpponents[g % seqOpponents.length];
       stats.games++;
-      console.log(`Game ${stats.games}/${NUM_GAMES}: MCTS(team ${mctsTeam}) vs smarter`);
+      console.log(`Game ${stats.games}/${NUM_GAMES}: MCTS(team ${mctsTeam}) vs ${opp.name}`);
 
-      const result = runMCTSGame(smarterAgent, 'smarter', MODE, mctsTeam);
+      const result = runMCTSGame(opp.agent, opp.name, MODE, mctsTeam);
 
       if (result.won) stats.wins++;
       else stats.losses++;
@@ -516,7 +525,7 @@ async function main() {
         JSON.stringify({
           gameId: stats.games,
           type: 'vs_heuristic',
-          opponent: 'smarter',
+          opponent: opp.name,
           mctsTeam,
           won: result.won,
           mctsScore: result.mctsScore,

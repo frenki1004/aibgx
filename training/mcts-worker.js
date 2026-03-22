@@ -11,6 +11,7 @@ const fs = require('fs');
 const logic = require('../logic');
 const { MCTSEngine } = require('../agents/mctsEngine');
 const smarterAgent = require('../agents/smarterAgent');
+const econAgent = require('../agents/econAgent');
 const { encodeStateForNN, encodeVisitsForNN } = require('./mcts-encoding');
 
 // Redirect console.log to parent
@@ -39,8 +40,11 @@ function loadNN(weightsPath) {
     const loaded = nnAgent.loadWeights(weightsPath);
     if (loaded) {
       nnValueFunction = (state, playerId) => {
-        try { return nnAgent.getValueEstimate(state, playerId); }
-        catch { return null; }
+        try {
+          return nnAgent.getValueEstimate(state, playerId);
+        } catch {
+          return null;
+        }
       };
       loadedWeightsPath = weightsPath;
     }
@@ -78,7 +82,9 @@ function runMCTSGame(opponentName, mode, mctsTeam, simsPerTurn, rolloutDepth) {
     let mctsResult;
     try {
       mctsResult = engine.search(state, mctsTeam);
-    } catch { mctsResult = { actions: [], rootVisits: {}, timeMs: 0 }; }
+    } catch {
+      mctsResult = { actions: [], rootVisits: {}, timeMs: 0 };
+    }
     totalSimTime += mctsResult.timeMs;
 
     if (mctsResult.actions.length > 0) {
@@ -91,8 +97,11 @@ function runMCTSGame(opponentName, mode, mctsTeam, simsPerTurn, rolloutDepth) {
 
     let oppActions;
     try {
-      oppActions = smarterAgent.generateActions(state, opponentId);
-    } catch { oppActions = []; }
+      const oppAgent = opponentName === 'econ' ? econAgent : smarterAgent;
+      oppActions = oppAgent.generateActions(state, opponentId);
+    } catch {
+      oppActions = [];
+    }
 
     const actionMap = {
       player0: mctsTeam === 0 ? mctsResult.actions : oppActions,
@@ -133,7 +142,10 @@ function runMCTSGame(opponentName, mode, mctsTeam, simsPerTurn, rolloutDepth) {
 // ============================================================
 function runMCTSSelfPlay(mode, simsPerTurn, rolloutDepth) {
   const engineOpts = {
-    simulations: simsPerTurn, rolloutDepth, timeLimitMs: 200, cExplore: 1.41,
+    simulations: simsPerTurn,
+    rolloutDepth,
+    timeLimitMs: 200,
+    cExplore: 1.41,
     valueFunction: nnValueFunction,
     // opponentFunction: null
   };
@@ -153,8 +165,16 @@ function runMCTSSelfPlay(mode, simsPerTurn, rolloutDepth) {
     }
 
     let result0, result1;
-    try { result0 = engine0.search(state, 0); } catch { result0 = { actions: [], rootVisits: {}, timeMs: 0 }; }
-    try { result1 = engine1.search(state, 1); } catch { result1 = { actions: [], rootVisits: {}, timeMs: 0 }; }
+    try {
+      result0 = engine0.search(state, 0);
+    } catch {
+      result0 = { actions: [], rootVisits: {}, timeMs: 0 };
+    }
+    try {
+      result1 = engine1.search(state, 1);
+    } catch {
+      result1 = { actions: [], rootVisits: {}, timeMs: 0 };
+    }
 
     if (result0.actions.length > 0) {
       turnRecords0.push({
@@ -189,7 +209,8 @@ function runMCTSSelfPlay(mode, simsPerTurn, rolloutDepth) {
   const score1 = state.players[1].score;
 
   return {
-    score0, score1,
+    score0,
+    score1,
     winner: score0 > score1 ? 0 : score1 > score0 ? 1 : -1,
     turns0: turnRecords0,
     turns1: turnRecords1,
@@ -211,17 +232,35 @@ parentPort.on('message', (msg) => {
           type: 'game_result',
           gameId: msg.gameId,
           jobType: 'self_play',
-          result: { score0: result.score0, score1: result.score1, winner: result.winner, totalTurns: result.totalTurns },
+          result: {
+            score0: result.score0,
+            score1: result.score1,
+            winner: result.winner,
+            totalTurns: result.totalTurns,
+          },
           turnRecords0: result.turns0,
           turnRecords1: result.turns1,
         });
       } else {
-        const result = runMCTSGame(msg.opponentName, msg.mode, msg.mctsTeam, msg.simsPerTurn, msg.rolloutDepth);
+        const result = runMCTSGame(
+          msg.opponentName,
+          msg.mode,
+          msg.mctsTeam,
+          msg.simsPerTurn,
+          msg.rolloutDepth
+        );
         parentPort.postMessage({
           type: 'game_result',
           gameId: msg.gameId,
           jobType: 'vs_heuristic',
-          result: { won: result.won, mctsScore: result.mctsScore, oppScore: result.oppScore, opponent: result.opponent, totalTurns: result.totalTurns, avgSimTimeMs: result.avgSimTimeMs },
+          result: {
+            won: result.won,
+            mctsScore: result.mctsScore,
+            oppScore: result.oppScore,
+            opponent: result.opponent,
+            totalTurns: result.totalTurns,
+            avgSimTimeMs: result.avgSimTimeMs,
+          },
           turnRecords: result.turns,
           mctsTeam: msg.mctsTeam,
         });
