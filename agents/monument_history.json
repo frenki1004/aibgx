@@ -416,133 +416,238 @@
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "monument_turns": 138,
-    "peak_territory": 137
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 62,
-    "peak_territory": 123
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 22,
-    "peak_territory": 142
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 54,
-    "peak_territory": 141
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 16,
-    "peak_territory": 158
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 20,
-    "peak_territory": 148
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 87,
-    "peak_territory": 194
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 189,
-    "peak_territory": 154
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 83,
-    "peak_territory": 125
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 75,
-    "peak_territory": 118
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 129,
-    "peak_territory": 162
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 24,
-    "peak_territory": 164
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 99,
-    "peak_territory": 148
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 37,
-    "peak_territory": 123
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 24,
-    "peak_territory": 159
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 65,
-    "peak_territory": 150
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "monument_turns": 42,
+    "monument_turns": 53,
     "peak_territory": 157
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "monument_turns": 27,
-    "peak_territory": 156
+    "monument_turns": 165,
+    "peak_territory": 173
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "monument_turns": 18,
+    "monument_turns": 62,
+    "peak_territory": 183
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 331,
+    "peak_territory": 234
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 245,
+    "peak_territory": 216
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 334,
+    "peak_territory": 223
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 260,
+    "peak_territory": 238
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 338,
+    "peak_territory": 206
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 262,
+    "peak_territory": 192
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 22,
+    "peak_territory": 135
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 31,
+    "peak_territory": 161
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 136,
+    "peak_territory": 275
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 297,
+    "peak_territory": 183
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 48,
+    "peak_territory": 187
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 237,
+    "peak_territory": 223
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 30,
+    "peak_territory": 162
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 140,
+    "peak_territory": 157
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 54,
+    "peak_territory": 158
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 335,
+    "peak_territory": 112
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 92,
+    "peak_territory": 165
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 217,
+    "peak_territory": 212
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 225,
+    "peak_territory": 213
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 278,
+    "peak_territory": 229
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 335,
+    "peak_territory": 197
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 208,
+    "peak_territory": 159
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 161,
+    "peak_territory": 194
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 333,
+    "peak_territory": 160
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 189,
+    "peak_territory": 184
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 184,
+    "peak_territory": 228
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 293,
+    "peak_territory": 229
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 15,
     "peak_territory": 109
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 19,
+    "peak_territory": 153
+  },
+  {
+    "outcome": "win",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 337,
+    "peak_territory": 177
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "monument_turns": 20,
+    "peak_territory": 158
   }
 ]

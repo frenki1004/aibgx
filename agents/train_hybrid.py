@@ -10,6 +10,9 @@ Usage:
   # Start from a specific opponent index (0-based):
   python3 agents/train_hybrid.py --start-opp=1
 
+  # Train only vs one opponent for N games then stop:
+  python3 agents/train_hybrid.py --opponents=python --max-games=50
+
 Press Ctrl+C to stop cleanly.
 """
 
@@ -51,7 +54,27 @@ def read_fitness(opponent: str) -> float:
         return 0.0
 
 
+def kill_stale_server():
+    """Kill any existing server/bot processes so port 8080 is free."""
+    import signal as _signal
+    killed = []
+    for proc_name in ["server/server.js", "hybrid_example.py", "python_example.py",
+                      "aggressive_example.py", "econ_example.py", "monument_example.py",
+                      "archer_swarm_example.py"]:
+        result = subprocess.run(["pgrep", "-f", proc_name], capture_output=True, text=True)
+        for pid_str in result.stdout.split():
+            try:
+                os.kill(int(pid_str), _signal.SIGKILL)
+                killed.append(pid_str)
+            except ProcessLookupError:
+                pass
+    if killed:
+        print(f"[train] Killed stale processes: {', '.join(killed)}")
+        time.sleep(1)
+
+
 def start_server() -> subprocess.Popen:
+    kill_stale_server()
     print("[train] Starting server...")
     proc = subprocess.Popen(
         ["node", "server/server.js", "--tournament"],
@@ -104,16 +127,24 @@ def stop(proc: subprocess.Popen, label: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--start-opp", type=int, default=0)
+    parser.add_argument("--opponents",  type=str, default=None,
+                        help="Comma-separated list of opponents to use, e.g. python or aggressive,econ")
+    parser.add_argument("--max-games",  type=int, default=0,
+                        help="Stop after this many games (0 = run forever)")
     args = parser.parse_args()
 
+    opponents   = [o.strip() for o in args.opponents.split(",")] if args.opponents else OPPONENTS
+    max_games   = args.max_games
     opp_idx     = args.start_opp
     server_proc = start_server()
-    opp_name    = OPPONENTS[opp_idx % len(OPPONENTS)]
+    opp_name    = opponents[opp_idx % len(opponents)]
     bot_proc    = start_bot(opp_name)
     opp_proc    = start_opponent(opp_name)
-    last_count  = read_game_count()
+    start_count = read_game_count()
+    last_count  = start_count
 
-    print(f"[train] Rotating every game. Order: {' → '.join(OPPONENTS)} → (repeat)")
+    limit_str = f"  max={max_games} games" if max_games else ""
+    print(f"[train] Rotating every game. Order: {' → '.join(opponents)} → (repeat){limit_str}")
     print(f"[train] Game 1 vs: {opp_name}\n")
 
     def shutdown(sig=None, frame=None):
@@ -134,25 +165,28 @@ def main():
                 print("[train] HybridBot crashed — restarting...")
                 bot_proc = start_bot(opp_name)
 
-            current = read_game_count()
+            current    = read_game_count()
             games_done = current - last_count
+            games_this_run = current - start_count
 
             if games_done > 0:
                 fitness = read_fitness(opp_name)
-                print(f"[train] game={current}  vs={opp_name}  fitness={fitness:+.0f}")
+                print(f"[train] game={current} (+{games_this_run})  vs={opp_name}  fitness={fitness:+.0f}")
 
-                # Rotate opponent for each completed game
                 for _ in range(games_done):
                     opp_idx += 1
                 last_count = current
 
-                opp_name = OPPONENTS[opp_idx % len(OPPONENTS)]
+                if max_games and games_this_run >= max_games:
+                    print(f"\n[train] Reached {max_games} games — stopping.")
+                    shutdown()
+
+                opp_name = opponents[opp_idx % len(opponents)]
                 stop(opp_proc, "opponent")
                 opp_proc = start_opponent(opp_name)
                 print(f"[train] Next game vs: {opp_name}")
 
             elif opp_proc.poll() is not None:
-                # Opponent crashed before game finished — restart it
                 opp_proc = start_opponent(opp_name)
 
     except Exception as e:

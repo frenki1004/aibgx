@@ -45,7 +45,27 @@ def read_fitness(opponent: str) -> float:
         return 0.0
 
 
+def kill_stale_server():
+    """Kill any existing server/bot processes so port 8080 is free."""
+    import signal as _signal
+    killed = []
+    for proc_name in ["server/server.js", "hybrid_example.py", "python_example.py",
+                      "aggressive_example.py", "econ_example.py", "monument_example.py",
+                      "archer_swarm_example.py"]:
+        result = subprocess.run(["pgrep", "-f", proc_name], capture_output=True, text=True)
+        for pid_str in result.stdout.split():
+            try:
+                os.kill(int(pid_str), _signal.SIGKILL)
+                killed.append(pid_str)
+            except ProcessLookupError:
+                pass
+    if killed:
+        print(f"[train] Killed stale processes: {', '.join(killed)}")
+        time.sleep(1)
+
+
 def start_server() -> subprocess.Popen:
+    kill_stale_server()
     print("[train] Starting server...")
     proc = subprocess.Popen(
         ["node", "server/server.js", "--tournament"],

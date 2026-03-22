@@ -146,8 +146,10 @@ def load_history() -> list:
 
 
 def save_history(h: list):
-    with open(HISTORY_FILE, "w") as f:
+    tmp = HISTORY_FILE + ".tmp"
+    with open(tmp, "w") as f:
         json.dump(h, f, indent=2)
+    os.replace(tmp, HISTORY_FILE)
 
 
 def filter_by_opponent(history: list, window: int) -> list:
@@ -873,10 +875,13 @@ async def main():
                     elif msg["type"] == "GAME_OVER":
                         winner    = msg.get("winner")
                         outcome   = "win" if winner == team_id else "loss" if winner is not None else "draw"
-                        scores    = msg.get("scores", {})
-                        my_score  = scores.get(str(team_id), 0)
-                        opp_score = next((v for k, v in scores.items() if k != str(team_id)), 0)
-                        score_delta = my_score - opp_score
+                        score_delta = 0
+                        state_end = msg.get("state", {})
+                        players   = state_end.get("players", [])
+                        me  = next((p for p in players if p["id"] == team_id), None)
+                        en  = next((p for p in players if p["id"] != team_id), None)
+                        if me and en:
+                            score_delta = me["score"] - en["score"]
 
                         history.append({
                             "outcome":         outcome,

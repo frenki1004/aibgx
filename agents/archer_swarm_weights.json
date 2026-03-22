@@ -1,14 +1,14 @@
 {
-  "critical_cities": 4,
-  "mass_threshold": 7,
-  "gold_buffer": 24.855088433902054,
+  "critical_cities": 2,
+  "mass_threshold": 11,
+  "gold_buffer": 24.693811997742973,
   "max_cities": 7,
-  "kite_retreat_dist": 2,
-  "w_forward": 6.766231637465296,
-  "w_fire_pos": 10.950959099850696,
-  "w_retreat_from_raider": 15.996062322303072,
-  "w_cohesion": 5.146079062799692,
-  "w_city_capture": 122.46975619991998,
-  "w_approach_city": 19.18954606199114,
-  "w_raid_tile": 4.827345761614894
+  "kite_retreat_dist": 3,
+  "w_forward": 5.958481252987653,
+  "w_fire_pos": 8,
+  "w_retreat_from_raider": 15.652921510117771,
+  "w_cohesion": 5.429591438999535,
+  "w_city_capture": 107.8102124758729,
+  "w_approach_city": 15.581668503741772,
+  "w_raid_tile": 6.215923917166015
 }

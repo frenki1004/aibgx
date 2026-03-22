@@ -57,10 +57,10 @@ DEFAULT_WEIGHTS = {
     "w_forward":        4.0,   # less aggressive forward push — stay back and build
     "w_enemy_city":     8.0,   # soldiers still threaten cities but it's not the focus
     "w_enemy_unit":     2.0,   # don't chase enemy units — waste of movement
-    "w_monument":      12.0,   # monuments give gold + score per city — critical for econ
+    "w_monument":      20.0,   # monuments give gold + score per city — critical for econ
     "w_raid_tile":      5.0,   # step onto enemy tiles when passing through
     "w_city_capture": 100.0,   # still capture cities of opportunity
-    "w_monument_guard":30.0,   # very strong pull to control monuments (gold income)
+    "w_monument_guard":50.0,   # very strong pull to control monuments (gold income)
     "w_plunder":       20.0,   # raiders are primary income — reward deep plundering
     "w_zoc_offense":    3.0,   # minimal ZoC aggression — soldiers are defensive
     "w_archer_range":   8.0,   # keep archers safe at range, guarding cities
@@ -169,10 +169,10 @@ WEIGHT_SANITY = {
     "w_forward":         (1,   12),
     "w_enemy_city":      (3,   25),
     "w_enemy_unit":      (0,   10),
-    "w_monument":        (5,   25),   # monuments are income — keep high
+    "w_monument":        (10,  35),   # monuments are income — keep high
     "w_raid_tile":       (1,   15),
-    "w_city_capture":    (70, 150),
-    "w_monument_guard":  (15,  50),   # strong monument control for gold
+    "w_city_capture":    (90, 150),
+    "w_monument_guard":  (40,  70),   # strong monument control for gold
     "w_plunder":         (8,   35),   # raiders are primary income — keep high
     "w_zoc_offense":     (1,   12),
     "w_archer_range":    (3,   18),
@@ -181,7 +181,7 @@ WEIGHT_SANITY = {
     "archers_per_city":  (0.5,  2),
     "raiders_per_city":  (0.5,  3),   # raiders are core — keep at least 0.5
     "max_expands":       (6,   15),   # always expand aggressively
-    "gold_buffer":       (30,  80),   # large buffer — econ needs reserves
+    "gold_buffer":       (40,  80),   # large buffer — econ needs reserves
 }
 
 
@@ -673,12 +673,30 @@ def generate_actions(state, my_team):
     # Keep a gold buffer so we can still build units after paying for the city
     if gold >= city_cost + w["gold_buffer"] and len(my_cities) < int(w["max_cities"]):
         conn = connected_territory(state, my_team)
+        enemy_unit_pos  = [(u["x"], u["y"]) for u in state["units"] if u["owner"] != my_team]
+        enemy_city_pos  = [(c["x"], c["y"]) for c in state["cities"] if c["owner"] != my_team]
+        enemy_tiles     = {(t["x"], t["y"]) for t in state["map"]["tiles"] if t.get("owner") not in (None, my_team)}
         candidates = []
         for pos in conn:
             tile = tile_lut.get(pos)
             if not tile or tile["type"] != "FIELD":
                 continue
             if pos in city_pos or pos in unit_pos:
+                continue
+            # Skip tiles adjacent to enemy territory, units, or cities — too exposed
+            too_exposed = False
+            for dx, dy in ADJ:
+                nb = (pos[0] + dx, pos[1] + dy)
+                if nb in enemy_tiles:
+                    too_exposed = True
+                    break
+                if any(chebyshev(pos[0], pos[1], ex2, ey2) <= 2 for ex2, ey2 in enemy_unit_pos):
+                    too_exposed = True
+                    break
+                if any(chebyshev(pos[0], pos[1], cx2, cy2) <= 3 for cx2, cy2 in enemy_city_pos):
+                    too_exposed = True
+                    break
+            if too_exposed:
                 continue
             fwd  = abs(pos[0] - ex)
             gap  = min((chebyshev(pos[0], pos[1], c["x"], c["y"]) for c in my_cities), default=0)
@@ -757,16 +775,61 @@ def generate_actions(state, my_team):
     # Assign monument guards before movement so dedicated units go to monuments
     monument_assignments = assign_monument_guards(state, my_team, my_units)
 
+    # Last-city dive: if only 1 city remains uncaptured (neutral or enemy),
+    # send every unit straight to it — whoever gets there first wins the game.
+    all_cities    = state["cities"]
+    neutral_cities = [c for c in all_cities if c.get("owner") is None]
+    enemy_cities_obj = [c for c in all_cities if c["owner"] != my_team and c.get("owner") is not None]
+    capturable = neutral_cities + enemy_cities_obj
+    last_city_target = None
+    if len(capturable) == 1:
+        lc = capturable[0]
+        last_city_target = (lc["x"], lc["y"])
+
     moving_pos = dict(unit_pos)
 
     def danger_key(u):
         return -threat_level(u, state, my_team)   # most endangered first
+
+    tile_lut_move = {(t["x"], t["y"]): t for t in state["map"]["tiles"]}
 
     for unit in sorted(my_units, key=danger_key):
         # Support both canMove (legacy) and can_move_next_turn (newer server versions)
         can_move = unit.get("can_move_next_turn", unit.get("canMove", True))
         if not can_move:
             continue
+
+        # Last-city dive: ignore ZoC and monument assignments, beeline for the city
+        if last_city_target is not None:
+            lx, ly = last_city_target
+            movement = UNIT_MOVEMENT[unit["type"]]
+            ux, uy = unit["x"], unit["y"]
+            best_lc_pos, best_lc_dist = None, chebyshev(ux, uy, lx, ly)
+            for dx in range(-movement, movement + 1):
+                for dy in range(-movement, movement + 1):
+                    if chebyshev(0, 0, dx, dy) > movement:
+                        continue
+                    tx, ty = ux + dx, uy + dy
+                    if not (0 <= tx < W and 0 <= ty < state["map"]["height"]):
+                        continue
+                    tile = tile_lut_move.get((tx, ty))
+                    if not tile or tile["type"] != "FIELD":
+                        continue
+                    if (tx, ty) in set(moving_pos.keys()) and (tx, ty) != (ux, uy):
+                        continue
+                    d = chebyshev(tx, ty, lx, ly)
+                    if d < best_lc_dist:
+                        best_lc_dist, best_lc_pos = d, (tx, ty)
+            if best_lc_pos and best_lc_pos != (ux, uy):
+                actions.append({
+                    "action": "MOVE",
+                    "from_x": ux, "from_y": uy,
+                    "to_x": best_lc_pos[0], "to_y": best_lc_pos[1],
+                })
+                del moving_pos[(ux, uy)]
+                moving_pos[best_lc_pos] = unit
+            continue
+
         if in_zoc(unit, enemy_soldiers):
             continue
         danger = threat_level(unit, state, my_team)

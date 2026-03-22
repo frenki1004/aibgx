@@ -31,8 +31,15 @@
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 112,
-    "peak_archers": 12
+    "peak_territory": 189,
+    "peak_archers": 14
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 167,
+    "peak_archers": 14
   },
   {
     "outcome": "loss",
@@ -45,112 +52,217 @@
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 183,
+    "peak_territory": 178,
     "peak_archers": 14
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 163,
+    "peak_territory": 128,
     "peak_archers": 14
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 166,
+    "peak_territory": 174,
     "peak_archers": 14
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 162,
-    "peak_archers": 14
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "peak_territory": 123,
-    "peak_archers": 8
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "peak_territory": 177,
+    "peak_territory": 182,
     "peak_archers": 10
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 155,
+    "peak_territory": 176,
+    "peak_archers": 10
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 194,
+    "peak_archers": 10
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 160,
+    "peak_archers": 10
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 171,
     "peak_archers": 9
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
+    "peak_territory": 202,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 150,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 167,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 144,
+    "peak_archers": 10
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 160,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 185,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 128,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 141,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 182,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 156,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 149,
+    "peak_archers": 9
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 128,
+    "peak_archers": 11
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 113,
+    "peak_archers": 9
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 157,
+    "peak_archers": 10
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 144,
+    "peak_archers": 9
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 171,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 139,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
+    "peak_territory": 160,
+    "peak_archers": 12
+  },
+  {
+    "outcome": "loss",
+    "score_delta": 0,
+    "opponent": "unknown",
     "peak_territory": 154,
-    "peak_archers": 8
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "peak_territory": 165,
-    "peak_archers": 8
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "peak_territory": 120,
     "peak_archers": 12
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 129,
+    "peak_territory": 178,
     "peak_archers": 12
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 147,
-    "peak_archers": 13
+    "peak_territory": 134,
+    "peak_archers": 12
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
     "peak_territory": 152,
-    "peak_archers": 13
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "peak_territory": 165,
     "peak_archers": 12
   },
   {
     "outcome": "loss",
     "score_delta": 0,
     "opponent": "unknown",
-    "peak_territory": 143,
-    "peak_archers": 14
-  },
-  {
-    "outcome": "loss",
-    "score_delta": 0,
-    "opponent": "unknown",
-    "peak_territory": 120,
-    "peak_archers": 10
+    "peak_territory": 149,
+    "peak_archers": 11
   }
 ]

@@ -135,8 +135,10 @@ def load_history() -> list:
 
 
 def save_history(history: list):
-    with open(HISTORY_FILE, "w") as f:
+    tmp = HISTORY_FILE + ".tmp"
+    with open(tmp, "w") as f:
         json.dump(history, f, indent=2)
+    os.replace(tmp, HISTORY_FILE)
 
 
 def load_best_weights() -> dict:
@@ -196,18 +198,18 @@ WEIGHT_SANITY = {
     "w_monument":        (10,  25),
     "w_raid_tile":       (3,   18),
     "w_city_capture":    (90, 150),
-    "w_monument_guard":  (10,  30),
+    "w_monument_guard":  (10,  22),  # was 30 — too high pins units at monuments
     "w_plunder":         (4,   25),
-    "w_zoc_offense":     (4,   20),
-    "w_archer_range":    (3,   15),
+    "w_zoc_offense":     (4,   12),  # was 20 — too high makes soldiers ignore cities
+    "w_archer_range":    (5,   15),  # raised floor — archers must value positioning
     "defend_pull":       (10,  35),
     "pressure_push":     (5,   20),
     "greed_expand":      (2,   15),
     "max_cities":        (2,    6),
     "soldiers_per_city": (1,    3),
-    "archers_per_city":  (0.5,  2),
+    "archers_per_city":  (1.0,  3),  # raised floor from 0.5 — always build archers
     "raiders_per_city":  (0.3,  1.5),
-    "max_expands":       (3,   12),
+    "max_expands":       (2,    6),  # lowered ceiling from 12 — stop over-expanding
     "gold_buffer":       (22,  50),
 }
 

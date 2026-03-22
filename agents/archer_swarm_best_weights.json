@@ -1,0 +1,14 @@
+{
+  "critical_cities": 4,
+  "mass_threshold": 7,
+  "gold_buffer": 24.855088433902054,
+  "max_cities": 7,
+  "kite_retreat_dist": 2,
+  "w_forward": 6.766231637465296,
+  "w_fire_pos": 10.950959099850696,
+  "w_retreat_from_raider": 15.996062322303072,
+  "w_cohesion": 5.146079062799692,
+  "w_city_capture": 122.46975619991998,
+  "w_approach_city": 19.18954606199114,
+  "w_raid_tile": 4.827345761614894
+}
