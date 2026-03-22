@@ -17,7 +17,7 @@ Keep this file clean and useful. When updating:
 
 ## Current Focus
 
-GCE VM is stopped. Need to start it, run data generation, copy data back, then train locally.
+Econ agent parallel training infrastructure done. Original weights held up after 30-game run (already well-optimized from novi). Next: longer run or targeted param search.
 
 ---
 
@@ -25,71 +25,70 @@ GCE VM is stopped. Need to start it, run data generation, copy data back, then t
 
 ### AI Pipeline
 - [done] MCTS engine with macro-actions (`agents/mctsEngine.js`, `agents/macroActions.js`)
-- [done] MCTS data generator — CLI args: `[numGames] [mode] [simsPerTurn] [rolloutDepth]` (`training/mcts-generate.js`)
-- [done] NN architecture — residual backbone + LayerNorm, 439K params (`training/train_nn.py`)
-- [done] NN agent — pure JS inference, dual-path (new/legacy weights) (`agents/nnAgent.js`)
-- [done] Self-play loop (`training/self-play-loop.js`)
-- [todo] Generate data on GCE VM and copy back locally
-- [todo] Train NN v1 once ~1000 examples collected
-- [todo] Evaluate NN agent vs smarterAgent
-- [todo] Self-play iteration loop (NN-guided MCTS → better data → better NN)
+- [done] MCTS data generator — inline games (`training/mcts-generate.js`)
+- [done] NN architecture — residual backbone + LayerNorm, auto input_dim (`training/train_nn.py`)
+- [done] NN agent — pure JS inference + data capture mode (`agents/nnAgent.js`, `agents/mctsNNAgent.js`)
+- [done] Eval harness — JS vs Python + JS vs JS (`training/eval-match.js`)
+- [done] AlphaZero loop — bootstrap vs hybrid, then self-play iters (`training/alphazero-loop.js`)
+- [in progress] Bootstrap: 8/20 games done, 442 examples in `training/data/iter_0/`
+- [todo] Complete bootstrap → train nn_v0 → 5 self-play iterations
+
+### Econ Param Tuning
+- [done] Parallel training orchestrator — 2 workers, independent weight evolution (`training/train-econ.js`)
+- [done] Head-to-head eval harness — 2 weight files, N games (`training/eval-econ.js`)
+- [done] econ_example.py supports env var file paths (`ECON_WEIGHTS_FILE`, `ECON_BEST_FILE`, `ECON_HISTORY_FILE`)
+- [done] 30-game run: 90% win rate both workers; original weights remain best (strong baseline from novi)
+- [todo] Longer run (200+ games) or targeted grid search to beat the baseline
+
+### AlphaZero Loop Design
+- **Bootstrap (iter 0):** MCTS (no NN) vs hybrid Python bot → data → train `nn_v0.json`
+- **Iterations 1–5:** MCTS+NN_prev self-play → data (this iter only, no accumulation) → train `nn_vN.json` → eval new vs prev + vs hybrid
+- Data written live during games via `WRITE_DATA` env var in `mctsNNAgent.js`
+- Models saved as `training/models/nn_v0.json`, `nn_v1.json`, etc.
 
 ### NN Architecture
-- Input: 290 features (global + per-unit + per-enemy + per-city)
-- Backbone: `input_proj(290→256)` → `ResBlock×2(256)` → `output_proj(256→128)`
+- Input: 520 features (auto-detected from data)
+- Backbone: `input_proj(520→256)` → `ResBlock×3(256)` → `output_proj(256→128)`
 - Heads: build (6×4), move (20×9), expand (16), city (binary), value (win prob)
 - Python venv at `venv/` — always use `venv/bin/python` for training
-
-### Infrastructure
-- [done] Google Cloud project `aibgx-training`
-- [done] VM `aibg-generator` — europe-west1-b, n2-standard-8 (8 cores) — **currently STOPPED**
-- [todo] Automate: copy data from VM → train locally → push new weights
-
-### Data Generation Params (optimized)
-- Fast (recommended for NN v1): `5 tournament 200 5` — ~20-30 min, ~3,500 examples per run
-- Quality (for later iterations): `10 tournament 500 20` — ~5-7 hrs, ~7,000 examples per run
-- Run 8 in parallel on VM → multiply output by 8
 
 ### Agents available
 - `dumb` — random moves
 - `smarter` — heuristic (baseline, used as MCTS rollout policy)
 - `smart2`, `econ` — heuristic variants
-- `mcts` — MCTS search at game time (use `MCTS_TIME_MS=250`)
-- `nn` — trained NN inference (~1ms/turn, falls back to smarter if no weights)
+- `mcts` — MCTS search at game time
+- `nn` — trained NN inference (~1ms/turn)
+- `mctsnn` — MCTS + NN value function (main competition bot)
 
 ---
 
 ## Training Workflow
 
+### AlphaZero Loop (main workflow)
 ```bash
-# 1. Generate data (run multiple in parallel, or on GCE VM)
-node training/mcts-generate.js 20 tournament 500
+# Resume bootstrap (already 8/20 games done — loop skips existing files)
+node training/alphazero-loop.js --bootstrap=20 --games=5 --sims=200 --workers=4 --iters=5 2>&1 | tee /tmp/alphazero.log
 
-# 2. Train (GPU auto-detected)
-venv/bin/python training/train_nn.py training/data/mcts_nn_*.jsonl --epochs 100
+# Tail in another terminal
+tail -f /tmp/alphazero.log
 
-# 3. Play with trained agent
-node agents/client.js nn 0 NNBot
-
-# 4. Full self-play loop (automates 1-3 in iterations)
-node training/self-play-loop.js 3 20 500
+# If nn_v0.json already exists, skip bootstrap:
+node training/alphazero-loop.js --bootstrap=20 --games=5 --sims=200 --workers=4 --iters=5 --skip-bootstrap 2>&1 | tee /tmp/alphazero.log
 ```
 
-### GCE VM Commands
+### Manual steps (one-off)
 ```bash
-# Check data generation progress
-gcloud compute ssh aibg-generator --zone=europe-west1-b --project=aibgx-training \
-  --command="wc -l ~/aibgx/training/data/mcts_nn_*.jsonl | tail -1 && echo running: \$(pgrep -c -f mcts-generate) generators"
+# Train on a specific iter's data only
+venv/bin/python training/train_nn.py training/data/iter_0/*.jsonl --epochs 100 --output training/models/
 
-# Copy data back when done
-gcloud compute scp --recurse aibg-generator:~/aibgx/training/data/ training/ \
-  --zone=europe-west1-b --project=aibgx-training
+# Eval current NN vs hybrid
+node training/eval-match.js --vs=hybrid --games=4 --weights=training/models/nn_v0.json
 
-# SSH in
-gcloud compute ssh aibg-generator --zone=europe-west1-b --project=aibgx-training
+# Eval new NN vs previous NN
+node training/eval-match.js --vs=nn --games=4 --weights=training/models/nn_v1.json --prev-weights=training/models/nn_v0.json
 
-# Stop VM when done (saves money)
-gcloud compute instances stop aibg-generator --zone=europe-west1-b --project=aibgx-training
+# Play with the latest NN
+NN_WEIGHTS=training/models/nn_v1.json node agents/client.js mctsnn 0 NNBot
 ```
 
 ---
