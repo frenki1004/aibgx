@@ -32,8 +32,8 @@ const args = process.argv.slice(2);
 const positionalArgs = args.filter((a) => !a.startsWith('--'));
 const NUM_GAMES = parseInt(positionalArgs[0]) || 20;
 const MODE = positionalArgs[1] || 'tournament';
-const SIMS_PER_TURN = parseInt(positionalArgs[2]) || 500;
-const ROLLOUT_DEPTH = 4;
+const SIMS_PER_TURN = parseInt(positionalArgs[2]) || 200;
+const ROLLOUT_DEPTH = 2;
 const NN_WEIGHTS_PATH =
   positionalArgs[3] || path.join(__dirname, 'models', 'civclash_agent_weights.json');
 
@@ -90,10 +90,9 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   const engine = new MCTSEngine({
     simulations: SIMS_PER_TURN,
     rolloutDepth: ROLLOUT_DEPTH,
-    timeLimitMs: 200,
+    timeLimitMs: 100,
     cExplore: 1.41,
     valueFunction: nnValueFunction,
-    // opponentFunction: null — use smarterAgent (matches actual game opponent)
   });
 
   let state = logic.createInitialState({ mode });
@@ -101,7 +100,7 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   const opponentId = 1 - mctsTeam;
   let totalSimTime = 0;
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 120_000;
+  const MAX_GAME_TIME_MS = 90_000;
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
@@ -170,7 +169,7 @@ function runMCTSSelfPlay(mode) {
   const engineOpts = {
     simulations: SIMS_PER_TURN,
     rolloutDepth: ROLLOUT_DEPTH,
-    timeLimitMs: 200,
+    timeLimitMs: 100,
     cExplore: 1.41,
     valueFunction: nnValueFunction,
   };
@@ -181,7 +180,7 @@ function runMCTSSelfPlay(mode) {
   const turnRecords0 = [];
   const turnRecords1 = [];
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 180_000;
+  const MAX_GAME_TIME_MS = 120_000;
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
@@ -434,13 +433,13 @@ async function main() {
   const stats = { games: 0, wins: 0, losses: 0, selfplay: 0, examples: 0 };
 
   // Build job list
-  // 40% econ, 40% smarter, 20% self-play
-  const vsHeuristicGames = Math.ceil(NUM_GAMES * 0.8);
-  const selfPlayGames = NUM_GAMES - vsHeuristicGames;
+  // 100% self-play (AlphaZero style — learns from playing against itself)
+  const vsHeuristicGames = 0;
+  const selfPlayGames = NUM_GAMES;
   const jobs = [];
   let gameId = 0;
 
-  const opponents = ['econ', 'smarter'];
+  const opponents = ['econ', 'econ', 'econ', 'smarter']; // 75% econ, 25% smarter
   for (let g = 0; g < vsHeuristicGames; g++) {
     gameId++;
     jobs.push({
@@ -487,6 +486,8 @@ async function main() {
 
     // 50/50 econ and smarter
     const seqOpponents = [
+      { agent: econAgent, name: 'econ' },
+      { agent: econAgent, name: 'econ' },
       { agent: econAgent, name: 'econ' },
       { agent: smarterAgent, name: 'smarter' },
     ];

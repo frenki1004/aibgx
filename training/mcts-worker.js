@@ -60,10 +60,9 @@ function runMCTSGame(opponentName, mode, mctsTeam, simsPerTurn, rolloutDepth) {
   const engine = new MCTSEngine({
     simulations: simsPerTurn,
     rolloutDepth,
-    timeLimitMs: 200,
+    timeLimitMs: 100,
     cExplore: 1.41,
     valueFunction: nnValueFunction,
-    // opponentFunction: null — use smarterAgent (matches actual game opponent)
   });
 
   let state = logic.createInitialState({ mode });
@@ -71,7 +70,7 @@ function runMCTSGame(opponentName, mode, mctsTeam, simsPerTurn, rolloutDepth) {
   const opponentId = 1 - mctsTeam;
   let totalSimTime = 0;
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 300_000; // 5 min — workers share CPU so games take longer
+  const MAX_GAME_TIME_MS = 180_000;
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
@@ -144,10 +143,9 @@ function runMCTSSelfPlay(mode, simsPerTurn, rolloutDepth) {
   const engineOpts = {
     simulations: simsPerTurn,
     rolloutDepth,
-    timeLimitMs: 200,
+    timeLimitMs: 100,
     cExplore: 1.41,
     valueFunction: nnValueFunction,
-    // opponentFunction: null
   };
   const engine0 = new MCTSEngine(engineOpts);
   const engine1 = new MCTSEngine(engineOpts);
@@ -156,7 +154,7 @@ function runMCTSSelfPlay(mode, simsPerTurn, rolloutDepth) {
   const turnRecords0 = [];
   const turnRecords1 = [];
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 360_000; // 6 min for self-play (both sides search)
+  const MAX_GAME_TIME_MS = 180_000;
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {

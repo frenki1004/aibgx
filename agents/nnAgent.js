@@ -169,10 +169,15 @@ const DIR_MAP = [
 
 const UNIT_TYPE_MAP = [null, 'SOLDIER', 'ARCHER', 'RAIDER'];
 
+// Must match sorting in mcts-encoding.js so slot indices align with training data
+function posKey(a, b) {
+  return a.y !== b.y ? a.y - b.y : a.x - b.x;
+}
+
 function decodeActions(output, state, playerId) {
   const actions = [];
-  const myUnits = state.units.filter((u) => u.owner === playerId);
-  const myCities = state.cities.filter((c) => c.owner === playerId);
+  const myUnits = state.units.filter((u) => u.owner === playerId).sort(posKey);
+  const myCities = state.cities.filter((c) => c.owner === playerId).sort(posKey);
   const player = state.players.find((p) => p.id === playerId);
   let remainingGold = player.gold + player.income;
 
@@ -283,8 +288,8 @@ function decodeActions(output, state, playerId) {
     const logits = output.moveLogits.slice(logitStart, logitStart + NUM_MOVE_OPTIONS);
 
     // Sort directions by score, try best first
-    // Penalize "stay" — NN is biased toward it due to padding in training data
-    const stayPenalty = 2.0;
+    // Mild stay penalty — ignore_index=-1 mostly fixed padding bias, but slight nudge still helps
+    const stayPenalty = 1.0;
     const dirs = logits
       .map((score, idx) => ({ idx, score: idx === 0 ? score - stayPenalty : score }))
       .sort((a, b) => b.score - a.score);

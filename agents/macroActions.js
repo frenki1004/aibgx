@@ -9,23 +9,44 @@
  */
 
 const {
-  ACTIONS, UNIT_TYPES, UNIT_STATS, ECONOMY, TERRAIN,
-  validateAction, getCityCost, getTilesAtDistance1,
-  chebyshevDistance, isInZoC, getConnectedTerritory, getUnit,
+  ACTIONS,
+  UNIT_TYPES,
+  UNIT_STATS,
+  ECONOMY,
+  TERRAIN,
+  validateAction,
+  getCityCost,
+  getTilesAtDistance1,
+  chebyshevDistance,
+  isInZoC,
+  getConnectedTerritory,
+  getUnit,
 } = require('../logic');
 
 // ============================================================
 // Helpers
 // ============================================================
 
-function getMyUnits(state, pid) { return state.units.filter(u => u.owner === pid); }
-function getEnemyUnits(state, pid) { return state.units.filter(u => u.owner !== pid); }
-function getMyCities(state, pid) { return state.cities.filter(c => c.owner === pid); }
-function getEnemyCities(state, pid) { return state.cities.filter(c => c.owner !== null && c.owner !== pid); }
-function getPlayer(state, pid) { return state.players.find(p => p.id === pid); }
+function getMyUnits(state, pid) {
+  return state.units.filter((u) => u.owner === pid);
+}
+function getEnemyUnits(state, pid) {
+  return state.units.filter((u) => u.owner !== pid);
+}
+function getMyCities(state, pid) {
+  return state.cities.filter((c) => c.owner === pid);
+}
+function getEnemyCities(state, pid) {
+  return state.cities.filter((c) => c.owner !== null && c.owner !== pid);
+}
+function getPlayer(state, pid) {
+  return state.players.find((p) => p.id === pid);
+}
 
 function getEmptyCities(state, pid) {
-  return getMyCities(state, pid).filter(c => !state.units.some(u => u.x === c.x && u.y === c.y));
+  return getMyCities(state, pid).filter(
+    (c) => !state.units.some((u) => u.x === c.x && u.y === c.y)
+  );
 }
 
 function canAfford(state, pid, cost) {
@@ -42,7 +63,7 @@ function getExpandableTiles(state, pid) {
       const key = `${adj.x},${adj.y}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      const t = state.map.tiles.find(tt => tt.x === adj.x && tt.y === adj.y);
+      const t = state.map.tiles.find((tt) => tt.x === adj.x && tt.y === adj.y);
       if (t && t.owner === null && t.type === TERRAIN.FIELD) tiles.push(t);
     }
   }
@@ -64,7 +85,9 @@ function canUnitMove(state, unit) {
 // Build strategies
 // ============================================================
 
-function buildNothing() { return []; }
+function buildNothing() {
+  return [];
+}
 
 function buildSoldiers(state, pid) {
   const actions = [];
@@ -72,8 +95,16 @@ function buildSoldiers(state, pid) {
   let gold = getPlayer(state, pid).gold;
   for (const city of emptyCities) {
     if (gold < UNIT_STATS.SOLDIER.cost) break;
-    const a = { action: ACTIONS.BUILD_UNIT, city_x: city.x, city_y: city.y, unit_type: UNIT_TYPES.SOLDIER };
-    if (validateAction(state, pid, a).valid) { actions.push(a); gold -= UNIT_STATS.SOLDIER.cost; }
+    const a = {
+      action: ACTIONS.BUILD_UNIT,
+      city_x: city.x,
+      city_y: city.y,
+      unit_type: UNIT_TYPES.SOLDIER,
+    };
+    if (validateAction(state, pid, a).valid) {
+      actions.push(a);
+      gold -= UNIT_STATS.SOLDIER.cost;
+    }
   }
   return actions;
 }
@@ -84,8 +115,16 @@ function buildArchers(state, pid) {
   let gold = getPlayer(state, pid).gold;
   for (const city of emptyCities) {
     if (gold < UNIT_STATS.ARCHER.cost) break;
-    const a = { action: ACTIONS.BUILD_UNIT, city_x: city.x, city_y: city.y, unit_type: UNIT_TYPES.ARCHER };
-    if (validateAction(state, pid, a).valid) { actions.push(a); gold -= UNIT_STATS.ARCHER.cost; }
+    const a = {
+      action: ACTIONS.BUILD_UNIT,
+      city_x: city.x,
+      city_y: city.y,
+      unit_type: UNIT_TYPES.ARCHER,
+    };
+    if (validateAction(state, pid, a).valid) {
+      actions.push(a);
+      gold -= UNIT_STATS.ARCHER.cost;
+    }
   }
   return actions;
 }
@@ -96,8 +135,16 @@ function buildRaiders(state, pid) {
   let gold = getPlayer(state, pid).gold;
   for (const city of emptyCities) {
     if (gold < UNIT_STATS.RAIDER.cost) break;
-    const a = { action: ACTIONS.BUILD_UNIT, city_x: city.x, city_y: city.y, unit_type: UNIT_TYPES.RAIDER };
-    if (validateAction(state, pid, a).valid) { actions.push(a); gold -= UNIT_STATS.RAIDER.cost; }
+    const a = {
+      action: ACTIONS.BUILD_UNIT,
+      city_x: city.x,
+      city_y: city.y,
+      unit_type: UNIT_TYPES.RAIDER,
+    };
+    if (validateAction(state, pid, a).valid) {
+      actions.push(a);
+      gold -= UNIT_STATS.RAIDER.cost;
+    }
   }
   return actions;
 }
@@ -109,19 +156,23 @@ function buildMixed(state, pid) {
   const types = [UNIT_TYPES.SOLDIER, UNIT_TYPES.ARCHER, UNIT_TYPES.SOLDIER, UNIT_TYPES.RAIDER];
   let ti = 0;
   for (const city of emptyCities) {
-    const t = types[ti % types.length]; ti++;
+    const t = types[ti % types.length];
+    ti++;
     if (gold < UNIT_STATS[t].cost) continue;
     const a = { action: ACTIONS.BUILD_UNIT, city_x: city.x, city_y: city.y, unit_type: t };
-    if (validateAction(state, pid, a).valid) { actions.push(a); gold -= UNIT_STATS[t].cost; }
+    if (validateAction(state, pid, a).valid) {
+      actions.push(a);
+      gold -= UNIT_STATS[t].cost;
+    }
   }
   return actions;
 }
 
 function buildCounterPick(state, pid) {
   const enemies = getEnemyUnits(state, pid);
-  const eSoldiers = enemies.filter(u => u.type === UNIT_TYPES.SOLDIER).length;
-  const eArchers = enemies.filter(u => u.type === UNIT_TYPES.ARCHER).length;
-  const eRaiders = enemies.filter(u => u.type === UNIT_TYPES.RAIDER).length;
+  const eSoldiers = enemies.filter((u) => u.type === UNIT_TYPES.SOLDIER).length;
+  const eArchers = enemies.filter((u) => u.type === UNIT_TYPES.ARCHER).length;
+  const eRaiders = enemies.filter((u) => u.type === UNIT_TYPES.RAIDER).length;
 
   // Pick counter to most common enemy type
   let buildType = UNIT_TYPES.SOLDIER;
@@ -134,7 +185,10 @@ function buildCounterPick(state, pid) {
   for (const city of emptyCities) {
     if (gold < UNIT_STATS[buildType].cost) break;
     const a = { action: ACTIONS.BUILD_UNIT, city_x: city.x, city_y: city.y, unit_type: buildType };
-    if (validateAction(state, pid, a).valid) { actions.push(a); gold -= UNIT_STATS[buildType].cost; }
+    if (validateAction(state, pid, a).valid) {
+      actions.push(a);
+      gold -= UNIT_STATS[buildType].cost;
+    }
   }
   return actions;
 }
@@ -142,7 +196,12 @@ function buildCounterPick(state, pid) {
 function buildOneSoldier(state, pid) {
   const emptyCities = getEmptyCities(state, pid);
   if (emptyCities.length === 0 || !canAfford(state, pid, UNIT_STATS.SOLDIER.cost)) return [];
-  const a = { action: ACTIONS.BUILD_UNIT, city_x: emptyCities[0].x, city_y: emptyCities[0].y, unit_type: UNIT_TYPES.SOLDIER };
+  const a = {
+    action: ACTIONS.BUILD_UNIT,
+    city_x: emptyCities[0].x,
+    city_y: emptyCities[0].y,
+    unit_type: UNIT_TYPES.SOLDIER,
+  };
   return validateAction(state, pid, a).valid ? [a] : [];
 }
 
@@ -152,16 +211,20 @@ function buildCity(state, pid) {
   const connected = getConnectedTerritory(state, pid);
   const myCities = getMyCities(state, pid);
 
-  let best = null, bestScore = -Infinity;
+  let best = null,
+    bestScore = -Infinity;
   for (const tile of state.map.tiles) {
     if (tile.owner !== pid || tile.type !== TERRAIN.FIELD) continue;
     if (!connected.has(`${tile.x},${tile.y}`)) continue;
-    if (state.cities.some(c => c.x === tile.x && c.y === tile.y)) continue;
-    if (state.units.some(u => u.x === tile.x && u.y === tile.y)) continue;
+    if (state.cities.some((c) => c.x === tile.x && c.y === tile.y)) continue;
+    if (state.units.some((u) => u.x === tile.x && u.y === tile.y)) continue;
 
     let score = 0;
     for (const c of myCities) score += Math.min(chebyshevDistance(tile.x, tile.y, c.x, c.y), 6);
-    if (score > bestScore) { bestScore = score; best = tile; }
+    if (score > bestScore) {
+      bestScore = score;
+      best = tile;
+    }
   }
 
   if (!best) return [];
@@ -173,7 +236,9 @@ function buildCity(state, pid) {
 // Expand strategies
 // ============================================================
 
-function expandNone() { return []; }
+function expandNone() {
+  return [];
+}
 
 function expandAggressive(state, pid, budget) {
   const gold = budget || getPlayer(state, pid).gold;
@@ -200,8 +265,8 @@ function expandDefensive(state, pid, budget) {
   const myCities = getMyCities(state, pid);
   // Expand near own cities
   tiles.sort((a, b) => {
-    const aDist = Math.min(...myCities.map(c => chebyshevDistance(a.x, a.y, c.x, c.y)));
-    const bDist = Math.min(...myCities.map(c => chebyshevDistance(b.x, b.y, c.x, c.y)));
+    const aDist = Math.min(...myCities.map((c) => chebyshevDistance(a.x, a.y, c.x, c.y)));
+    const bDist = Math.min(...myCities.map((c) => chebyshevDistance(b.x, b.y, c.x, c.y)));
     return aDist - bDist;
   });
 
@@ -232,7 +297,9 @@ function expandModerate(state, pid, budget) {
 // Move strategies
 // ============================================================
 
-function moveStay() { return []; }
+function moveStay() {
+  return [];
+}
 
 function moveAllPush(state, pid) {
   const actions = [];
@@ -254,7 +321,10 @@ function moveAllPush(state, pid) {
 
     for (const c of candidates) {
       const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: c.x, to_y: c.y };
-      if (validateAction(state, pid, a).valid) { actions.push(a); break; }
+      if (validateAction(state, pid, a).valid) {
+        actions.push(a);
+        break;
+      }
     }
   }
   return actions;
@@ -274,7 +344,10 @@ function moveTowardMonuments(state, pid) {
     let nearestDist = Infinity;
     for (const m of monuments) {
       const d = chebyshevDistance(unit.x, unit.y, m.x, m.y);
-      if (d < nearestDist) { nearestDist = d; nearestMon = m; }
+      if (d < nearestDist) {
+        nearestDist = d;
+        nearestMon = m;
+      }
     }
 
     const dx = Math.sign(nearestMon.x - unit.x);
@@ -290,7 +363,10 @@ function moveTowardMonuments(state, pid) {
 
     for (const c of candidates) {
       const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: c.x, to_y: c.y };
-      if (validateAction(state, pid, a).valid) { actions.push(a); break; }
+      if (validateAction(state, pid, a).valid) {
+        actions.push(a);
+        break;
+      }
     }
   }
   return actions;
@@ -309,7 +385,10 @@ function moveTowardEnemyCities(state, pid) {
     let best = Infinity;
     for (const c of enemyCities) {
       const d = chebyshevDistance(unit.x, unit.y, c.x, c.y);
-      if (d < best) { best = d; target = c; }
+      if (d < best) {
+        best = d;
+        target = c;
+      }
     }
 
     const dx = Math.sign(target.x - unit.x);
@@ -324,7 +403,10 @@ function moveTowardEnemyCities(state, pid) {
 
     for (const c of candidates) {
       const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: c.x, to_y: c.y };
-      if (validateAction(state, pid, a).valid) { actions.push(a); break; }
+      if (validateAction(state, pid, a).valid) {
+        actions.push(a);
+        break;
+      }
     }
   }
   return actions;
@@ -343,7 +425,10 @@ function moveTowardEnemyUnits(state, pid) {
     let best = Infinity;
     for (const e of enemies) {
       const d = chebyshevDistance(unit.x, unit.y, e.x, e.y);
-      if (d < best) { best = d; target = e; }
+      if (d < best) {
+        best = d;
+        target = e;
+      }
     }
 
     const dx = Math.sign(target.x - unit.x);
@@ -358,7 +443,10 @@ function moveTowardEnemyUnits(state, pid) {
 
     for (const c of candidates) {
       const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: c.x, to_y: c.y };
-      if (validateAction(state, pid, a).valid) { actions.push(a); break; }
+      if (validateAction(state, pid, a).valid) {
+        actions.push(a);
+        break;
+      }
     }
   }
   return actions;
@@ -378,7 +466,10 @@ function moveDefend(state, pid) {
     let best = Infinity;
     for (const c of myCities) {
       const d = chebyshevDistance(unit.x, unit.y, c.x, c.y);
-      if (d < best) { best = d; target = c; }
+      if (d < best) {
+        best = d;
+        target = c;
+      }
     }
 
     if (best <= 2) continue; // Already defending
@@ -386,7 +477,13 @@ function moveDefend(state, pid) {
     const dx = Math.sign(target.x - unit.x);
     const dy = Math.sign(target.y - unit.y);
 
-    const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: unit.x + dx, to_y: unit.y + dy };
+    const a = {
+      action: ACTIONS.MOVE,
+      from_x: unit.x,
+      from_y: unit.y,
+      to_x: unit.x + dx,
+      to_y: unit.y + dy,
+    };
     if (validateAction(state, pid, a).valid) actions.push(a);
   }
   return actions;
@@ -416,12 +513,21 @@ function moveRaiderFlank(state, pid) {
 
       for (const c of candidates) {
         const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: c.x, to_y: c.y };
-        if (validateAction(state, pid, a).valid) { actions.push(a); break; }
+        if (validateAction(state, pid, a).valid) {
+          actions.push(a);
+          break;
+        }
       }
     } else {
       // Non-raiders push forward normally
       const dx = Math.sign(enemyX - unit.x);
-      const a = { action: ACTIONS.MOVE, from_x: unit.x, from_y: unit.y, to_x: unit.x + dx, to_y: unit.y };
+      const a = {
+        action: ACTIONS.MOVE,
+        from_x: unit.x,
+        from_y: unit.y,
+        to_x: unit.x + dx,
+        to_y: unit.y,
+      };
       if (validateAction(state, pid, a).valid) actions.push(a);
     }
   }
@@ -432,7 +538,7 @@ function moveSmart(state, pid) {
   // Use smarterAgent's movement logic
   const smarterAgent = require('./smarterAgent');
   const allActions = smarterAgent.generateActions(state, pid);
-  return allActions.filter(a => a.action === ACTIONS.MOVE);
+  return allActions.filter((a) => a.action === ACTIONS.MOVE);
 }
 
 // ============================================================
@@ -484,7 +590,7 @@ function generateMacroActions(state, playerId) {
   const hasUnits = myUnits.length > 0;
   const emptyCities = getEmptyCities(state, playerId);
   const canBuild = emptyCities.length > 0;
-  const gold = player.gold;
+  const gold = player.gold + player.income; // income is added before builds in processTurn
   const progress = state.turn / state.maxTurns; // 0..1
 
   function makeMacro(name, buildFn, expandFn, moveFn) {
@@ -498,7 +604,9 @@ function generateMacroActions(state, playerId) {
       const expandActions = expandFn(state, playerId, goldLeft);
       const moveActions = moveFn(state, playerId);
       macros.push({ name, actions: [...buildActions, ...expandActions, ...moveActions] });
-    } catch (e) { /* skip broken */ }
+    } catch (e) {
+      /* skip broken */
+    }
   }
 
   // --- Always available: smarterAgent full baseline ---
@@ -508,15 +616,21 @@ function generateMacroActions(state, playerId) {
     if (smartActions.length > 0) {
       macros.push({ name: 'smart_baseline', actions: smartActions });
     }
-  } catch (e) { /* skip */ }
+  } catch (e) {
+    /* skip */
+  }
 
   // --- Early game (0-25%): economy focus ---
   if (progress < 0.25) {
     makeMacro('econ_expand', buildNothing, expandAggressive, moveStay);
-    if (canBuild && gold >= 20) makeMacro('soldier+expand', buildOneSoldier, expandModerate, moveStay);
-    if (canBuild && gold >= 20) makeMacro('soldiers+expand_def', buildSoldiers, expandDefensive, moveStay);
-    if (gold >= getCityCost(state, playerId)) makeMacro('build_city+expand', buildCity, expandDefensive, moveStay);
-    if (canBuild && gold >= 20) makeMacro('soldiers+push', buildSoldiers, expandModerate, hasUnits ? moveAllPush : moveStay);
+    if (canBuild && gold >= 20)
+      makeMacro('soldier+expand', buildOneSoldier, expandModerate, moveStay);
+    if (canBuild && gold >= 20)
+      makeMacro('soldiers+expand_def', buildSoldiers, expandDefensive, moveStay);
+    if (gold >= getCityCost(state, playerId))
+      makeMacro('build_city+expand', buildCity, expandDefensive, moveStay);
+    if (canBuild && gold >= 20)
+      makeMacro('soldiers+push', buildSoldiers, expandModerate, hasUnits ? moveAllPush : moveStay);
     makeMacro('full_expand', buildNothing, expandAggressive, hasUnits ? moveAllPush : moveStay);
     // Always try building units from turn 1 — never pass early game
     if (canBuild) {
@@ -527,19 +641,57 @@ function generateMacroActions(state, playerId) {
 
   // --- Mid game (25-65%): army building + movement ---
   if (progress >= 0.15 && progress < 0.65) {
-    if (canBuild && gold >= 20) makeMacro('soldiers+smart', buildSoldiers, expandModerate, moveSmart);
+    if (canBuild && gold >= 20)
+      makeMacro('soldiers+smart', buildSoldiers, expandModerate, moveSmart);
     if (canBuild && gold >= 25) makeMacro('archers+smart', buildArchers, expandModerate, moveSmart);
-    if (canBuild && gold >= 15) makeMacro('raiders+flank', buildRaiders, expandModerate, hasUnits ? moveRaiderFlank : moveStay);
-    if (canBuild && enemyUnits.length > 0) makeMacro('counter+push', buildCounterPick, expandModerate, hasUnits ? moveAllPush : moveStay);
-    if (canBuild && gold >= 20) makeMacro('mixed+monuments', buildMixed, expandModerate, hasUnits ? moveTowardMonuments : moveStay);
-    if (gold >= getCityCost(state, playerId)) makeMacro('city+defend', buildCity, expandDefensive, hasUnits ? moveDefend : moveStay);
+    if (canBuild && gold >= 15)
+      makeMacro(
+        'raiders+flank',
+        buildRaiders,
+        expandModerate,
+        hasUnits ? moveRaiderFlank : moveStay
+      );
+    if (canBuild && enemyUnits.length > 0)
+      makeMacro(
+        'counter+push',
+        buildCounterPick,
+        expandModerate,
+        hasUnits ? moveAllPush : moveStay
+      );
+    if (canBuild && gold >= 20)
+      makeMacro(
+        'mixed+monuments',
+        buildMixed,
+        expandModerate,
+        hasUnits ? moveTowardMonuments : moveStay
+      );
+    if (gold >= getCityCost(state, playerId))
+      makeMacro('city+defend', buildCity, expandDefensive, hasUnits ? moveDefend : moveStay);
   }
 
   // --- Late game (50%+): aggression + monuments ---
   if (progress >= 0.5) {
-    if (canBuild && gold >= 20) makeMacro('soldiers+cities', buildSoldiers, expandNone, hasUnits ? moveTowardEnemyCities : moveStay);
-    if (canBuild && gold >= 20) makeMacro('soldiers+monuments', buildSoldiers, expandNone, hasUnits ? moveTowardMonuments : moveStay);
-    if (canBuild && enemyUnits.length > 0) makeMacro('counter+enemies', buildCounterPick, expandNone, hasUnits ? moveTowardEnemyUnits : moveStay);
+    if (canBuild && gold >= 20)
+      makeMacro(
+        'soldiers+cities',
+        buildSoldiers,
+        expandNone,
+        hasUnits ? moveTowardEnemyCities : moveStay
+      );
+    if (canBuild && gold >= 20)
+      makeMacro(
+        'soldiers+monuments',
+        buildSoldiers,
+        expandNone,
+        hasUnits ? moveTowardMonuments : moveStay
+      );
+    if (canBuild && enemyUnits.length > 0)
+      makeMacro(
+        'counter+enemies',
+        buildCounterPick,
+        expandNone,
+        hasUnits ? moveTowardEnemyUnits : moveStay
+      );
     if (hasUnits) makeMacro('allout_push', buildNothing, expandNone, moveAllPush);
     if (hasUnits) makeMacro('allout_cities', buildNothing, expandNone, moveTowardEnemyCities);
     if (hasUnits) makeMacro('defend_hold', buildNothing, expandNone, moveDefend);
@@ -554,7 +706,7 @@ function generateMacroActions(state, playerId) {
   }
 
   // Filter out empty-action macros (MCTS should never choose "do nothing")
-  const nonEmpty = macros.filter(m => m.actions.length > 0);
+  const nonEmpty = macros.filter((m) => m.actions.length > 0);
 
   // Deduplicate by action content (different names can produce same actions)
   const seen = new Set();

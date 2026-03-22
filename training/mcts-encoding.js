@@ -15,16 +15,24 @@ const {
   getCityCost,
 } = require('../logic');
 
+// Stable sort key: ensures same physical unit/city always gets same slot index
+// regardless of creation order or deaths reshuffling the array
+function posKey(a, b) {
+  return a.y !== b.y ? a.y - b.y : a.x - b.x;
+}
+
 // ============================================================
 // Feature encoding: state → 320-dim feature vector
 // ============================================================
 function encodeStateForNN(state, playerId) {
   const player = state.players.find((p) => p.id === playerId);
   const opponent = state.players.find((p) => p.id !== playerId);
-  const myUnits = state.units.filter((u) => u.owner === playerId);
-  const enemyUnits = state.units.filter((u) => u.owner !== playerId);
-  const myCities = state.cities.filter((c) => c.owner === playerId);
-  const enemyCities = state.cities.filter((c) => c.owner !== null && c.owner !== playerId);
+  const myUnits = state.units.filter((u) => u.owner === playerId).sort(posKey);
+  const enemyUnits = state.units.filter((u) => u.owner !== playerId).sort(posKey);
+  const myCities = state.cities.filter((c) => c.owner === playerId).sort(posKey);
+  const enemyCities = state.cities
+    .filter((c) => c.owner !== null && c.owner !== playerId)
+    .sort(posKey);
   const myTiles = state.map.tiles.filter((t) => t.owner === playerId).length;
   const enemyTiles = state.map.tiles.filter((t) => t.owner !== null && t.owner !== playerId).length;
 
@@ -202,8 +210,8 @@ function encodeStateForNN(state, playerId) {
 // Encode MCTS visit distribution as NN targets
 // ============================================================
 function encodeVisitsForNN(rootVisits, selectedActions, state, playerId) {
-  const myUnits = state.units.filter((u) => u.owner === playerId);
-  const myCities = state.cities.filter((c) => c.owner === playerId);
+  const myUnits = state.units.filter((u) => u.owner === playerId).sort(posKey);
+  const myCities = state.cities.filter((c) => c.owner === playerId).sort(posKey);
   const MAX_UNITS = 20,
     MAX_CITIES = 6;
 
