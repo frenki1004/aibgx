@@ -67,7 +67,7 @@ function runMCTSGame(opponentName, mode, mctsTeam, simsPerTurn, rolloutDepth) {
   const opponentId = 1 - mctsTeam;
   let totalSimTime = 0;
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 120_000;
+  const MAX_GAME_TIME_MS = 300_000; // 5 min — workers share CPU so games take longer
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
@@ -144,7 +144,7 @@ function runMCTSSelfPlay(mode, simsPerTurn, rolloutDepth) {
   const turnRecords0 = [];
   const turnRecords1 = [];
   const gameStartTime = Date.now();
-  const MAX_GAME_TIME_MS = 180_000;
+  const MAX_GAME_TIME_MS = 360_000; // 6 min for self-play (both sides search)
 
   while (!state.gameOver) {
     if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {

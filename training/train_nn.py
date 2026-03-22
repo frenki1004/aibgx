@@ -8,7 +8,7 @@ Two training signals from MCTS:
 
 Architecture:
   Input: 290 features (global stats + per-unit + per-city)
-  Shared backbone: 290 → 512 → 256 → 128
+  Shared backbone: 290 → 1024 → 512 → 256
   Heads:
     - build_head:  per-city unit build decision (6 × 4)
     - move_head:   per-unit move direction (20 × 9)
@@ -224,9 +224,13 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
             # Combined (AlphaZero-style: policy + value)
             loss = policy_loss + 1.0 * v_loss
 
+            # Skip catastrophic batches (prevents gradient explosions)
+            if not torch.isfinite(loss) or loss.item() > 1000:
+                continue
+
             optimizer.zero_grad()
             loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
             optimizer.step()
 
             total_loss += loss.item()
@@ -348,7 +352,7 @@ def export_json_weights(model, output_path):
 def main():
     parser = argparse.ArgumentParser(description="Train CivClash NN (MCTS distillation)")
     parser.add_argument("data", nargs="+", help="JSONL data files (supports glob)")
-    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--epochs", type=int, default=75)
     parser.add_argument("--batch", type=int, default=64)
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--output", default="models", help="Output directory")
