@@ -23,6 +23,9 @@ const {
   chebyshevDistance, isInZoC, getConnectedTerritory,
 } = require('../logic');
 
+// Shared feature encoding (single source of truth — also used by training data generation)
+const { encodeStateForNN } = require('../training/mcts-encoding');
+
 // Fallback
 const smarterAgent = require('./smarterAgent');
 
@@ -132,131 +135,6 @@ class SimpleNN {
       value,                // win probability [0, 1]
     };
   }
-}
-
-// ============================================================
-// Feature encoding (must match generate-expert-data.js exactly)
-// ============================================================
-function encodeState(state, playerId) {
-  const player = state.players.find(p => p.id === playerId);
-  const opponent = state.players.find(p => p.id !== playerId);
-
-  const myUnits = state.units.filter(u => u.owner === playerId);
-  const enemyUnits = state.units.filter(u => u.owner !== playerId);
-  const myCities = state.cities.filter(c => c.owner === playerId);
-  const enemyCities = state.cities.filter(c => c.owner !== null && c.owner !== playerId);
-  const myTiles = state.map.tiles.filter(t => t.owner === playerId).length;
-  const enemyTiles = state.map.tiles.filter(t => t.owner !== null && t.owner !== playerId).length;
-
-  const mySoldiers = myUnits.filter(u => u.type === 'SOLDIER').length;
-  const myArchers = myUnits.filter(u => u.type === 'ARCHER').length;
-  const myRaiders = myUnits.filter(u => u.type === 'RAIDER').length;
-  const enemySoldiers = enemyUnits.filter(u => u.type === 'SOLDIER').length;
-  const enemyArchers = enemyUnits.filter(u => u.type === 'ARCHER').length;
-  const enemyRaiders = enemyUnits.filter(u => u.type === 'RAIDER').length;
-
-  const monuments = state.monuments || [];
-  const myMonuments = monuments.filter(m => m.controlledBy === playerId).length;
-  const enemyMonuments = monuments.filter(m => m.controlledBy !== null && m.controlledBy !== playerId).length;
-
-  const W = state.map.width;
-  const H = state.map.height;
-  const maxTiles = W * H;
-
-  let myUnitCenterX = 0, myUnitCenterY = 0;
-  if (myUnits.length > 0) {
-    myUnitCenterX = myUnits.reduce((s, u) => s + u.x, 0) / myUnits.length;
-    myUnitCenterY = myUnits.reduce((s, u) => s + u.y, 0) / myUnits.length;
-  }
-  let enemyUnitCenterX = 0, enemyUnitCenterY = 0;
-  if (enemyUnits.length > 0) {
-    enemyUnitCenterX = enemyUnits.reduce((s, u) => s + u.x, 0) / enemyUnits.length;
-    enemyUnitCenterY = enemyUnits.reduce((s, u) => s + u.y, 0) / enemyUnits.length;
-  }
-
-  let avgArmyDist = W;
-  if (myUnits.length > 0 && enemyUnits.length > 0) {
-    let totalDist = 0, pairs = 0;
-    for (const u of myUnits) {
-      for (const e of enemyUnits) {
-        totalDist += chebyshevDistance(u.x, u.y, e.x, e.y);
-        pairs++;
-      }
-    }
-    avgArmyDist = totalDist / pairs;
-  }
-
-  let myDistToMonument = W, enemyDistToMonument = W;
-  if (monuments.length > 0) {
-    if (myUnits.length > 0) {
-      myDistToMonument = Math.min(...myUnits.flatMap(u =>
-        monuments.map(m => chebyshevDistance(u.x, u.y, m.x, m.y))));
-    }
-    if (enemyUnits.length > 0) {
-      enemyDistToMonument = Math.min(...enemyUnits.flatMap(u =>
-        monuments.map(m => chebyshevDistance(u.x, u.y, m.x, m.y))));
-    }
-  }
-
-  const excess = Math.max(0, myUnits.length - myCities.length);
-  const enemyExcess = Math.max(0, enemyUnits.length - enemyCities.length);
-
-  const features = [
-    state.turn / state.maxTurns,
-    player.gold / 500, player.income / 50, player.score / 1000,
-    opponent.gold / 500, opponent.income / 50, opponent.score / 1000,
-    myTiles / maxTiles, enemyTiles / maxTiles, (myTiles - enemyTiles) / maxTiles,
-    mySoldiers / 10, myArchers / 10, myRaiders / 10, myUnits.length / 20,
-    enemySoldiers / 10, enemyArchers / 10, enemyRaiders / 10, enemyUnits.length / 20,
-    myCities.length / 6, enemyCities.length / 6,
-    myMonuments / 3, enemyMonuments / 3,
-    monuments.length > 0 ? (myMonuments - enemyMonuments) / monuments.length : 0,
-    excess / 10, enemyExcess / 10,
-    myUnitCenterX / W, myUnitCenterY / H,
-    enemyUnitCenterX / W, enemyUnitCenterY / H,
-    avgArmyDist / W, myDistToMonument / W, enemyDistToMonument / W,
-  ];
-
-  // Per-unit features (20 × 7)
-  const MAX_UNITS = 20;
-  for (let i = 0; i < MAX_UNITS; i++) {
-    if (i < myUnits.length) {
-      const u = myUnits[i];
-      features.push(
-        u.type === 'SOLDIER' ? 1 : 0, u.type === 'ARCHER' ? 1 : 0, u.type === 'RAIDER' ? 1 : 0,
-        u.x / W, u.y / H, u.hp / 2, (u.canMove ?? u.can_move_next_turn ?? true) ? 1 : 0,
-      );
-    } else {
-      features.push(0, 0, 0, 0, 0, 0, 0);
-    }
-  }
-
-  // Per-enemy features (20 × 5)
-  for (let i = 0; i < MAX_UNITS; i++) {
-    if (i < enemyUnits.length) {
-      const u = enemyUnits[i];
-      features.push(
-        u.type === 'SOLDIER' ? 1 : 0, u.type === 'ARCHER' ? 1 : 0, u.type === 'RAIDER' ? 1 : 0,
-        u.x / W, u.y / H,
-      );
-    } else {
-      features.push(0, 0, 0, 0, 0);
-    }
-  }
-
-  // Per-city features (6 × 3)
-  const MAX_CITIES = 6;
-  for (let i = 0; i < MAX_CITIES; i++) {
-    if (i < myCities.length) {
-      const c = myCities[i];
-      const empty = !state.units.some(u => u.x === c.x && u.y === c.y);
-      features.push(c.x / W, c.y / H, empty ? 1 : 0);
-    } else {
-      features.push(0, 0, 0);
-    }
-  }
-
-  return features;
 }
 
 // ============================================================
@@ -440,6 +318,29 @@ function decodeActions(output, state, playerId) {
     }
   }
 
+  // --- Economic fallback ---
+  // NN tends to hoard gold (trained on padded "do nothing" targets).
+  // If we have unspent gold, delegate economic decisions to smarterAgent.
+  if (remainingGold >= 30) {
+    const smarterActions = smarterAgent.generateActions(state, playerId);
+    // Keep NN's move decisions, but take smarterAgent's economic actions
+    const nnMoveFromXY = new Set(actions.filter(a => a.action === ACTIONS.MOVE).map(a => `${a.from_x},${a.from_y}`));
+    for (const sa of smarterActions) {
+      if (sa.action === ACTIONS.BUILD_UNIT || sa.action === ACTIONS.BUILD_CITY || sa.action === ACTIONS.EXPAND_TERRITORY) {
+        // Don't double-build at same city
+        if (sa.action === ACTIONS.BUILD_UNIT) {
+          const alreadyBuilding = actions.some(a => a.action === ACTIONS.BUILD_UNIT && a.city_x === sa.city_x && a.city_y === sa.city_y);
+          if (alreadyBuilding) continue;
+        }
+        if (sa.action === ACTIONS.BUILD_CITY) {
+          const alreadyBuildingCity = actions.some(a => a.action === ACTIONS.BUILD_CITY);
+          if (alreadyBuildingCity) continue;
+        }
+        actions.push(sa);
+      }
+    }
+  }
+
   return actions;
 }
 
@@ -469,7 +370,7 @@ function generateActions(state, playerId) {
   }
 
   try {
-    const features = encodeState(state, playerId);
+    const features = encodeStateForNN(state, playerId);
     const output = nn.forward(features);
 
     if (!output) {
@@ -497,7 +398,7 @@ function generateActions(state, playerId) {
 function getValueEstimate(state, playerId) {
   if (!nn.loaded) return null;
   try {
-    const features = encodeState(state, playerId);
+    const features = encodeStateForNN(state, playerId);
     const output = nn.forward(features);
     return output ? output.value : null;
   } catch {

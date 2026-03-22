@@ -260,10 +260,14 @@ function runWithWorkers(jobs) {
 
       w.on('error', (err) => {
         console.error(`Worker ${i} error: ${err.message}`);
+        completed++;
+        dispatchNext(i);
       });
 
       w.on('exit', (code) => {
-        if (code !== 0 && code !== 1) console.error(`Worker ${i} exited with code ${code}`);
+        if (code !== 0 && code !== 1) {
+          console.error(`Worker ${i} exited with code ${code}`);
+        }
       });
 
       workers.push(w);

@@ -50,13 +50,13 @@ function runCommand(cmd, description) {
   }
 }
 
-function getLatestDataFile() {
+function getLatestDataFiles(count) {
   if (!fs.existsSync(dataDir)) return [];
   const files = fs.readdirSync(dataDir)
     .filter(f => f.startsWith('mcts_nn_') && f.endsWith('.jsonl'))
     .sort()
     .reverse();
-  return files.length > 0 ? [path.join(dataDir, files[0])] : [];
+  return files.slice(0, count).map(f => path.join(dataDir, f));
 }
 
 async function main() {
@@ -98,7 +98,8 @@ async function main() {
     }
 
     // Step 2: Train NN on latest data only (freshest, highest quality)
-    const latestData = getLatestDataFile();
+    const dataFileCount = LARGE_MODEL ? 2 : 1;
+    const latestData = getLatestDataFiles(dataFileCount);
     if (latestData.length === 0) {
       console.error('No data files found. Stopping.');
       break;
