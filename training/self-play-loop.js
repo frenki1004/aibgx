@@ -40,7 +40,7 @@ function runCommand(cmd, description) {
   console.log(`\n>>> ${description}`);
   console.log(`    ${cmd}\n`);
   try {
-    execSync(cmd, { stdio: 'inherit', cwd: trainingDir, timeout: 24 * 60 * 60 * 1000 });
+    execSync(cmd, { stdio: 'inherit', cwd: trainingDir, timeout: 30 * 60 * 1000 }); // 30 min max per command
     return true;
   } catch (err) {
     console.error(`Command failed: ${err.message}`);
@@ -150,9 +150,10 @@ async function main() {
   }
 
   console.log(`\nFinal model: ${path.join(modelDir, 'civclash_agent_weights.json')}`);
-  console.log(`\nDeploy: node agents/client.js nn 0 NNBot`);
+  console.log(`\nDeploy:\n  node agents/client.js nn 0 NNBot\n  node agents/client.js smarter 1 SmarterBot`);
+  const nextIter = ITERATIONS + 3;
   console.log(`\nTo continue training:`);
-  console.log(`  node self-play-loop.js ${ITERATIONS + 3} ${GAMES_PER_ITER} ${SIMS_PER_TURN}`);
+  console.log(`  node self-play-loop.js ${nextIter} ${GAMES_PER_ITER} ${SIMS_PER_TURN}`);
 }
 
 main().catch(console.error);

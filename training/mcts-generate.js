@@ -23,8 +23,6 @@ const fs = require('fs');
 const logic = require('../logic');
 const { MCTSEngine } = require('../agents/mctsEngine');
 const smarterAgent = require('../agents/smarterAgent');
-const smart2Agent = require('../agents/smart2Agent');
-const econAgent = require('../agents/econAgent');
 
 const {
   UNIT_TYPES, UNIT_STATS, ECONOMY, TERRAIN,
@@ -36,13 +34,11 @@ const args = process.argv.slice(2);
 const NUM_GAMES = parseInt(args[0]) || 20;
 const MODE = args[1] || 'tournament';
 const SIMS_PER_TURN = parseInt(args[2]) || 500;
-const ROLLOUT_DEPTH = 20;
+const ROLLOUT_DEPTH = 4; // Keep shallow for speed — deep rollouts are too slow
 
-// Opponents for MCTS to play against
+// Opponents for MCTS to play against — only the strongest
 const OPPONENTS = [
   { name: 'smarter', fn: smarterAgent },
-  { name: 'smart2', fn: smart2Agent },
-  { name: 'econ', fn: econAgent },
 ];
 
 // Output
@@ -214,6 +210,7 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   const engine = new MCTSEngine({
     simulations: SIMS_PER_TURN,
     rolloutDepth: ROLLOUT_DEPTH,
+    timeLimitMs: 200, // Cap each turn at 200ms for speed
     cExplore: 1.41,
   });
 
@@ -222,9 +219,21 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
   const opponentId = 1 - mctsTeam;
   let totalSimTime = 0;
 
+  const gameStartTime = Date.now();
+  const MAX_GAME_TIME_MS = 120_000; // 2 min max per game
+
   while (!state.gameOver) {
+    // Hard timeout — abort game if it takes too long
+    if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
+      console.log(`\n  TIMEOUT after ${state.turn} turns`);
+      break;
+    }
+
     // MCTS player
-    const mctsResult = engine.search(state, mctsTeam);
+    let mctsResult;
+    try {
+      mctsResult = engine.search(state, mctsTeam);
+    } catch { mctsResult = { actions: [], rootVisits: {}, timeMs: 0 }; }
     totalSimTime += mctsResult.timeMs;
 
     // Record for training
@@ -245,14 +254,19 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
       player1: mctsTeam === 1 ? mctsResult.actions : oppActions,
     };
 
-    const result = logic.processTurn(state, actionMap);
-    state = result.newState;
+    try {
+      const result = logic.processTurn(state, actionMap);
+      state = result.newState;
+    } catch {
+      console.log(`\n  CRASH at turn ${state.turn}`);
+      break;
+    }
 
-    // Progress logging
-    if (state.turn % 50 === 0) {
+    // Progress logging — every 10 turns so user sees it moving
+    if (state.turn % 10 === 0) {
       const me = state.players[mctsTeam];
       const opp = state.players[opponentId];
-      process.stdout.write(`  t${state.turn} ${me.score}-${opp.score} `);
+      process.stdout.write(`  t${state.turn}(${me.score}-${opp.score}) `);
     }
   }
 
@@ -274,16 +288,24 @@ function runMCTSGame(opponentAgent, opponentName, mode, mctsTeam) {
 // Run MCTS self-play (both sides use MCTS)
 // ============================================================
 function runMCTSSelfPlay(mode) {
-  const engine0 = new MCTSEngine({ simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, cExplore: 1.41 });
-  const engine1 = new MCTSEngine({ simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, cExplore: 1.41 });
+  const engine0 = new MCTSEngine({ simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, timeLimitMs: 200, cExplore: 1.41 });
+  const engine1 = new MCTSEngine({ simulations: SIMS_PER_TURN, rolloutDepth: ROLLOUT_DEPTH, timeLimitMs: 200, cExplore: 1.41 });
 
   let state = logic.createInitialState({ mode });
   const turnRecords0 = [];
   const turnRecords1 = [];
+  const gameStartTime = Date.now();
+  const MAX_GAME_TIME_MS = 180_000; // 3 min max for self-play
 
   while (!state.gameOver) {
-    const result0 = engine0.search(state, 0);
-    const result1 = engine1.search(state, 1);
+    if (Date.now() - gameStartTime > MAX_GAME_TIME_MS) {
+      console.log(`\n  TIMEOUT after ${state.turn} turns`);
+      break;
+    }
+
+    let result0, result1;
+    try { result0 = engine0.search(state, 0); } catch { result0 = { actions: [], rootVisits: {}, timeMs: 0 }; }
+    try { result1 = engine1.search(state, 1); } catch { result1 = { actions: [], rootVisits: {}, timeMs: 0 }; }
 
     // Record both sides
     turnRecords0.push({
@@ -298,11 +320,16 @@ function runMCTSSelfPlay(mode) {
     });
 
     const actionMap = { player0: result0.actions, player1: result1.actions };
-    const result = logic.processTurn(state, actionMap);
-    state = result.newState;
+    try {
+      const result = logic.processTurn(state, actionMap);
+      state = result.newState;
+    } catch {
+      console.log(`\n  CRASH at turn ${state.turn}`);
+      break;
+    }
 
-    if (state.turn % 50 === 0) {
-      process.stdout.write(`  t${state.turn} ${state.players[0].score}-${state.players[1].score} `);
+    if (state.turn % 10 === 0) {
+      process.stdout.write(`  t${state.turn}(${state.players[0].score}-${state.players[1].score}) `);
     }
   }
 
@@ -331,8 +358,8 @@ function main() {
 
   const stats = { games: 0, wins: 0, losses: 0, selfplay: 0, examples: 0 };
 
-  // Split: 70% vs heuristic bots, 30% self-play
-  const vsHeuristicGames = Math.ceil(NUM_GAMES * 0.7);
+  // Split: 90% vs heuristic bots, 10% self-play (self-play is 2x slower)
+  const vsHeuristicGames = Math.ceil(NUM_GAMES * 0.9);
   const selfPlayGames = NUM_GAMES - vsHeuristicGames;
 
   // --- MCTS vs Heuristic Bots ---
