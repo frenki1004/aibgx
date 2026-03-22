@@ -1,0 +1,143 @@
+
+========== TOURNAMENT: 7 agents, 3 games per match ==========
+
+--- NNBot vs EconBot (3 games) ---
+  G1: NNBot(L) LOSS 2239-11514  (172t)
+  G2: NNBot(R) LOSS 1407-7009  (137t)
+  G3: NNBot(L) LOSS 463-3837  (90t)
+  >> NNBot 0W-3L-0D | Avg: 1370 vs 7453 | Match: EconBot
+
+--- NNBot vs SmarterBot (3 games) ---
+  G1: NNBot(L) WIN  15629-1159  (350t)
+  G2: NNBot(R) LOSS 8817-25745  (350t)
+  G3: NNBot(L) WIN  33695-7961  (350t)
+  >> NNBot 2W-1L-0D | Avg: 19380 vs 11622 | Match: NNBot
+
+--- NNBot vs Smart2Bot (3 games) ---
+  G1: NNBot(L) WIN  54-51  (29t)
+  G2: NNBot(R) WIN  172-154  (40t)
+  G3: NNBot(L) WIN  147-135  (38t)
+  >> NNBot 3W-0L-0D | Avg: 124 vs 113 | Match: NNBot
+
+--- NNBot vs DumbBot (3 games) ---
+  G1: NNBot(L) WIN  7419-6450  (350t)
+  G2: NNBot(R) WIN  11794-4151  (350t)
+  G3: NNBot(L) WIN  8472-6422  (350t)
+  >> NNBot 3W-0L-0D | Avg: 9228 vs 5674 | Match: NNBot
+
+--- NNBot vs EconBot2(aibgx2) (3 games) ---
+  G1: NNBot(L) WIN  14046-2104  (350t)
+  G2: NNBot(R) LOSS 1796-5017  (123t)
+  G3: NNBot(L) WIN  35426-3687  (350t)
+  >> NNBot 2W-1L-0D | Avg: 17089 vs 3603 | Match: NNBot
+
+--- NNBot vs SmarterBot2(aibgx2) (3 games) ---
+  G1: NNBot(L) WIN  30361-6534  (350t)
+  G2: NNBot(R) WIN  20002-6470  (350t)
+  G3: NNBot(L) WIN  14569-6521  (350t)
+  >> NNBot 3W-0L-0D | Avg: 21644 vs 6508 | Match: NNBot
+
+--- EconBot vs SmarterBot (3 games) ---
+  G1: EconBot(L) LOSS 1154-27391  (350t)
+  G2: EconBot(R) LOSS 8753-17538  (350t)
+  G3: EconBot(L) LOSS 8245-24966  (350t)
+  >> EconBot 0W-3L-0D | Avg: 6051 vs 23298 | Match: SmarterBot
+
+--- EconBot vs Smart2Bot (3 games) ---
+  G1: EconBot(L) WIN  104-84  (30t)
+  G2: EconBot(R) WIN  106-84  (30t)
+  G3: EconBot(L) LOSS 3224-8935  (350t)
+  >> EconBot 2W-1L-0D | Avg: 1145 vs 3034 | Match: EconBot
+
+--- EconBot vs DumbBot (3 games) ---
+  G1: EconBot(L) WIN  123-122  (52t)
+  G2: EconBot(R) WIN  173-145  (56t)
+  G3: EconBot(L) WIN  307-284  (102t)
+  >> EconBot 3W-0L-0D | Avg: 201 vs 184 | Match: EconBot
+
+--- EconBot vs EconBot2(aibgx2) (3 games) ---
+  G1: EconBot(L) LOSS 4477-4544  (350t)
+  G2: EconBot(R) WIN  14254-5403  (350t)
+  G3: EconBot(L) LOSS 6318-6346  (350t)
+  >> EconBot 1W-2L-0D | Avg: 8350 vs 5431 | Match: EconBot2(aibgx2)
+
+--- EconBot vs SmarterBot2(aibgx2) (3 games) ---
+  G1: EconBot(L) LOSS 35453-38750  (350t)
+  G2: EconBot(R) LOSS 1905-12316  (350t)
+  G3: EconBot(L) WIN  60022-4421  (350t)
+  >> EconBot 1W-2L-0D | Avg: 32460 vs 18496 | Match: SmarterBot2(aibgx2)
+
+--- SmarterBot vs Smart2Bot (3 games) ---
+  G1: SmarterBot(L) LOSS 267-282  (41t)
+  G2: SmarterBot(R) LOSS 338-339  (46t)
+  G3: SmarterBot(L) WIN  1563-955  (75t)
+  >> SmarterBot 1W-2L-0D | Avg: 723 vs 525 | Match: Smart2Bot
+
+--- SmarterBot vs DumbBot (3 games) ---
+  G1: SmarterBot(L) WIN  33-17  (22t)
+  G2: SmarterBot(R) WIN  216-188  (46t)
+  G3: SmarterBot(L) WIN  157-156  (40t)
+  >> SmarterBot 3W-0L-0D | Avg: 135 vs 120 | Match: SmarterBot
+
+--- SmarterBot vs EconBot2(aibgx2) (3 games) ---
+  G1: SmarterBot(L) WIN  21699-1586  (350t)
+  G2: SmarterBot(R) WIN  43055-12401  (350t)
+  G3: SmarterBot(L) WIN  16379-7940  (350t)
+  >> SmarterBot 3W-0L-0D | Avg: 27044 vs 7309 | Match: SmarterBot
+
+--- SmarterBot vs SmarterBot2(aibgx2) (3 games) ---
+  G1: SmarterBot(L) LOSS 12539-19291  (350t)
+  G2: SmarterBot(R) LOSS 1012-19453  (350t)
+  G3: SmarterBot(L) LOSS 10113-10134  (350t)
+  >> SmarterBot 0W-3L-0D | Avg: 7888 vs 16293 | Match: SmarterBot2(aibgx2)
+
+--- Smart2Bot vs DumbBot (3 games) ---
+  G1: Smart2Bot(L) WIN  422-372  (98t)
+  G2: Smart2Bot(R) WIN  352-300  (82t)
+  G3: Smart2Bot(L) WIN  56-46  (28t)
+  >> Smart2Bot 3W-0L-0D | Avg: 277 vs 239 | Match: Smart2Bot
+
+--- Smart2Bot vs EconBot2(aibgx2) (3 games) ---
+  G1: Smart2Bot(L) WIN  5436-5055  (350t)
+  G2: Smart2Bot(R) LOSS 72-89  (31t)
+  G3: Smart2Bot(L) LOSS 79-89  (31t)
+  >> Smart2Bot 1W-2L-0D | Avg: 1862 vs 1744 | Match: EconBot2(aibgx2)
+
+--- Smart2Bot vs SmarterBot2(aibgx2) (3 games) ---
+  G1: Smart2Bot(L) WIN  306-286  (45t)
+  G2: Smart2Bot(R) WIN  326-311  (47t)
+  G3: Smart2Bot(L) WIN  371-333  (59t)
+  >> Smart2Bot 3W-0L-0D | Avg: 334 vs 310 | Match: Smart2Bot
+
+--- DumbBot vs EconBot2(aibgx2) (3 games) ---
+  G1: DumbBot(L) WIN  382-186  (59t)
+  G2: DumbBot(R) LOSS 130-145  (52t)
+  G3: DumbBot(L) LOSS 58-63  (47t)
+  >> DumbBot 1W-2L-0D | Avg: 190 vs 131 | Match: EconBot2(aibgx2)
+
+--- DumbBot vs SmarterBot2(aibgx2) (3 games) ---
+  G1: DumbBot(L) LOSS 385-932  (71t)
+  G2: DumbBot(R) LOSS 114-119  (38t)
+  G3: DumbBot(L) DRAW 27-27  (27t)
+  >> DumbBot 0W-2L-1D | Avg: 175 vs 359 | Match: SmarterBot2(aibgx2)
+
+--- EconBot2(aibgx2) vs SmarterBot2(aibgx2) (3 games) ---
+  G1: EconBot2(aibgx2)(L) LOSS 11827-15039  (350t)
+  G2: EconBot2(aibgx2)(R) LOSS 10078-19990  (350t)
+  G3: EconBot2(aibgx2)(L) LOSS 10438-20168  (350t)
+  >> EconBot2(aibgx2) 0W-3L-0D | Avg: 10781 vs 18399 | Match: SmarterBot2(aibgx2)
+
+
+======================================================================
+FINAL STANDINGS
+======================================================================
+Rank  Agent                    W-  L-  D    Win%  AvgScore    AvgOpp    Diff
+----------------------------------------------------------------------
+1     NNBot                   13-  5-  0   72.2%     11473      5829  +5644
+2     SmarterBot              11-  7-  0   61.1%     11785      8280  +3505
+3     EconBot                 10-  8-  0   55.6%      9277      8635  +641
+4     Smart2Bot               10-  8-  0   55.6%      1024       714  +310
+5     SmarterBot2(aibgx2)     10-  7-  1   55.6%     10061     12214  -2153
+6     EconBot2(aibgx2)         7- 11-  0   38.9%      4833     12156  -7323
+7     DumbBot                  1- 16-  1    5.6%      1097      1722  -625
+======================================================================
