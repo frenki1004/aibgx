@@ -1,14 +1,14 @@
 """
-Training manager for hybrid_example.py.
+Training manager for archer_swarm_example.py.
 
 Opponent rotation: cycles to the next bot after EVERY completed game.
-  Game 1 → aggressive, Game 2 → econ, Game 3 → python, Game 4 → aggressive, …
+  Game 1 → aggressive, Game 2 → smarter, Game 3 → econ, Game 4 → aggressive, …
 
 Usage:
-  python3 agents/train_hybrid.py
+  python3 agents/train_archer_swarm.py
 
   # Start from a specific opponent index (0-based):
-  python3 agents/train_hybrid.py --start-opp=1
+  python3 agents/train_archer_swarm.py --start-opp=1
 
 Press Ctrl+C to stop cleanly.
 """
@@ -17,18 +17,12 @@ import argparse, json, os, signal, subprocess, sys, time
 
 ROOT             = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 AGENTS_DIR       = os.path.join(ROOT, "agents")
-HISTORY_FILE     = os.path.join(AGENTS_DIR, "hybrid_history.json")
+HISTORY_FILE     = os.path.join(AGENTS_DIR, "archer_swarm_history.json")
 
-OPPONENTS        = ["aggressive", "econ", "python"]
+OPPONENTS        = ["aggressive", "smarter", "econ"]
 POLL_INTERVAL    = 3
 SERVER_BOOT_WAIT = 3
-EVAL_EVERY       = 5   # must match EVAL_EVERY in hybrid_example.py
-
-PYTHON_BOTS = {
-    "aggressive": "aggressive_example.py",
-    "econ":       "econ_example.py",
-    "python":     "python_example.py",
-}
+EVAL_EVERY       = 5   # must match EVAL_EVERY in archer_swarm_example.py
 
 
 def read_game_count() -> int:
@@ -65,30 +59,21 @@ def start_server() -> subprocess.Popen:
 
 
 def start_bot(opponent: str) -> subprocess.Popen:
-    env  = {**os.environ, "TEAM": "0", "BOT_NAME": "HybridBot", "OPPONENT": opponent}
+    env  = {**os.environ, "TEAM": "0", "BOT_NAME": "ArcherSwarmBot", "OPPONENT": opponent}
     proc = subprocess.Popen(
-        [sys.executable, "hybrid_example.py"],
+        [sys.executable, "archer_swarm_example.py"],
         cwd=AGENTS_DIR, env=env,
     )
     return proc
 
 
 def start_opponent(name: str) -> subprocess.Popen:
-    script = PYTHON_BOTS.get(name)
-    if script:
-        env  = {**os.environ, "TEAM": "1", "BOT_NAME": f"Opp_{name}"}
-        proc = subprocess.Popen(
-            [sys.executable, script],
-            cwd=AGENTS_DIR, env=env,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-    else:
-        proc = subprocess.Popen(
-            ["node", "client.js", name, "1", f"Opp_{name}"],
-            cwd=AGENTS_DIR,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
-    return proc
+    print(f"[train] Next opponent: {name}")
+    return subprocess.Popen(
+        ["node", "client.js", name, "1", f"Opp_{name}"],
+        cwd=AGENTS_DIR,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
 
 
 def stop(proc: subprocess.Popen, label: str):
@@ -119,7 +104,7 @@ def main():
     def shutdown(sig=None, frame=None):
         print("\n[train] Shutting down...")
         stop(opp_proc, "opponent")
-        stop(bot_proc,  "HybridBot")
+        stop(bot_proc,  "ArcherSwarmBot")
         stop(server_proc, "server")
         sys.exit(0)
 
@@ -131,17 +116,16 @@ def main():
             time.sleep(POLL_INTERVAL)
 
             if bot_proc.poll() is not None:
-                print("[train] HybridBot crashed — restarting...")
+                print("[train] ArcherSwarmBot crashed — restarting...")
                 bot_proc = start_bot(opp_name)
 
-            current = read_game_count()
+            current    = read_game_count()
             games_done = current - last_count
 
             if games_done > 0:
                 fitness = read_fitness(opp_name)
                 print(f"[train] game={current}  vs={opp_name}  fitness={fitness:+.0f}")
 
-                # Rotate opponent for each completed game
                 for _ in range(games_done):
                     opp_idx += 1
                 last_count = current
@@ -149,10 +133,8 @@ def main():
                 opp_name = OPPONENTS[opp_idx % len(OPPONENTS)]
                 stop(opp_proc, "opponent")
                 opp_proc = start_opponent(opp_name)
-                print(f"[train] Next game vs: {opp_name}")
 
             elif opp_proc.poll() is not None:
-                # Opponent crashed before game finished — restart it
                 opp_proc = start_opponent(opp_name)
 
     except Exception as e:

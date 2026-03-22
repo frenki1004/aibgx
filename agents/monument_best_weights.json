@@ -1,0 +1,17 @@
+{
+  "w_monument_rush": 35.06115595576499,
+  "w_monument_guard": 22.241158135677956,
+  "w_monument_ring": 13.436303616785269,
+  "w_forward": 5.147273061405488,
+  "w_enemy_city": 17.762243584749022,
+  "w_city_capture": 99.27470846565461,
+  "w_raid_tile": 7.981819296831754,
+  "w_plunder": 10.624052863224597,
+  "w_archer_range": 6.8699962715202485,
+  "w_city_near_monument": 6.035031848074486,
+  "archers_per_monument": 1.2420243753915539,
+  "soldiers_per_monument": 1,
+  "raiders_per_monument": 1.4347818772789325,
+  "max_cities": 6.136639310489628,
+  "gold_buffer": 32.82496654117932
+}

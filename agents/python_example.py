@@ -588,6 +588,12 @@ def best_move(unit, state, my_team, unit_positions, ex, W, danger: float = 0.0,
                 # ── ATTACK MODE ─────────────────────────────────────────────
                 score += (abs(ux - ex) - abs(tx - ex)) * w["w_forward"]
 
+                # Penalise hugging map edges — units cluster there when routing around water
+                if ty == 0 or ty == H - 1:
+                    score -= 4.0
+                if ty == 1 or ty == H - 2:
+                    score -= 2.0
+
                 if unit["type"] == "SOLDIER" and enemy_cities:
                     od = ec_dist.get((ux, uy), 999)
                     nd = ec_dist.get((tx, ty), 999)

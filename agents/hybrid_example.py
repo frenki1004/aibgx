@@ -59,10 +59,10 @@ LETHAL_THREATS = {
 }
 
 # ── learning constants ─────────────────────────────────────────────────────────
-EVAL_EVERY      = 10     # evaluate weights every N games
+EVAL_EVERY      = 5      # evaluate weights every N games
 KEEP_THRESHOLD  = 0.55   # keep weights if win-rate >= this
-MUTATION_SIGMA  = 0.12   # std-dev of Gaussian weight perturbation (as fraction)
-HISTORY_WINDOW  = 20     # games to look back when evaluating win-rate
+MUTATION_SIGMA  = 0.15   # std-dev of Gaussian weight perturbation (as fraction)
+HISTORY_WINDOW  = 30     # games to look back when evaluating win-rate
 
 SCRIPT_DIR           = os.path.dirname(os.path.abspath(__file__))
 WEIGHTS_FILE         = os.path.join(SCRIPT_DIR, "hybrid_weights.json")
@@ -74,7 +74,7 @@ DEFAULT_WEIGHTS = {
     "w_forward":        6.0,   # moderate forward push (mode multipliers amplify this)
     "w_enemy_city":    20.0,   # soldiers care strongly about approaching enemy cities
     "w_enemy_unit":     5.0,   # engage enemies in range
-    "w_monument":       8.0,   # contest monuments actively
+    "w_monument":      14.0,   # contest monuments actively
     "w_raid_tile":      8.0,   # step onto enemy territory while passing
     "w_city_capture": 100.0,   # always capture enemy cities if reachable
     "w_monument_guard":20.0,   # hold monuments once we have them
@@ -193,7 +193,7 @@ WEIGHT_SANITY = {
     "w_forward":         (3,   15),
     "w_enemy_city":      (15,  40),
     "w_enemy_unit":      (2,   15),
-    "w_monument":        (4,   20),
+    "w_monument":        (10,  25),
     "w_raid_tile":       (3,   18),
     "w_city_capture":    (90, 150),
     "w_monument_guard":  (10,  30),
@@ -221,9 +221,7 @@ def weight_sanity_check(w: dict):
             w[k] = max(lo, min(hi, v))
             clamped.append(f"  {k}: {v:.2f} → {w[k]:.2f} (range {lo}–{hi})")
     if clamped:
-        print("[learn] Clamped out-of-range weights:")
-        for line in clamped:
-            print(line)
+        pass
 
 
 def diagnose_losses(history: list, window: int) -> dict:
@@ -249,7 +247,6 @@ def diagnose_losses(history: list, window: int) -> dict:
     if len(elim_losses) >= 2:
         hints["soldiers_per_city"] = +0.4
         hints["gold_buffer"]       = -5.0
-        print(f"[learn] Diagnosis: {len(elim_losses)} elimination losses → boosting military")
 
     # Losing on score with poor monument control (< 20 turns across losses on avg)
     if score_losses:
@@ -257,7 +254,6 @@ def diagnose_losses(history: list, window: int) -> dict:
         if avg_mon < 20:
             hints["w_monument_guard"] = +4.0
             hints["w_monument"]       = +2.0
-            print(f"[learn] Diagnosis: score losses with avg {avg_mon:.0f} monument turns → boosting monument weights")
 
     # Losing on score with low territory (< 40 peak tiles on avg)
     if score_losses:
@@ -265,7 +261,6 @@ def diagnose_losses(history: list, window: int) -> dict:
         if avg_terr < 40:
             hints["max_expands"]  = +1.0
             hints["w_raid_tile"]  = +2.0
-            print(f"[learn] Diagnosis: score losses with avg {avg_terr:.0f} peak territory → boosting expansion")
 
     return hints
 
@@ -307,15 +302,11 @@ def maybe_evolve(history: list, weights: dict, best_weights: dict) -> tuple:
     # the last EVAL_EVERY games (i.e. what fitness was when best was saved)
     prev_fitness = compute_fitness(history[:-EVAL_EVERY], HISTORY_WINDOW)
 
-    print(f"[learn] games={n}  win_rate={wr:.0%}  fitness={fitness:+.0f}  "
-          f"prev_fitness={prev_fitness:+.0f}  "
-          f"weights={json.dumps({k: round(v,2) for k,v in weights.items()})}")
 
     # If current weights improved on best, save them as new best
     if fitness > prev_fitness:
         best_weights = dict(weights)
         save_best_weights(best_weights)
-        print(f"[learn] New best weights saved (fitness {fitness:+.0f} > {prev_fitness:+.0f})")
 
     # Adaptive sigma: explore more aggressively when losing badly
     # fitness < 0 means losing on average; scale sigma by loss magnitude
@@ -327,7 +318,6 @@ def maybe_evolve(history: list, weights: dict, best_weights: dict) -> tuple:
 
     # Always mutate from best weights, not current (prevents compounding bad mutations)
     new_w = mutate(best_weights, sigma=adaptive_sigma, hints=hints)
-    print(f"[learn] Mutating from best weights (sigma={adaptive_sigma:.2f})")
     save_weights(new_w)
     return new_w, best_weights
 
@@ -407,11 +397,6 @@ def counter_build_priority(enemy_units: list) -> list:
         "RAIDER":  _enemy_composition["RAIDER"]  + 2 * sum(1 for u in enemy_units if u["type"] == "RAIDER"),
     }
     dominant = max(blended, key=blended.get)
-    if blended[dominant] > 0:
-        print(f"[bot] Enemy composition: "
-              f"soldiers={blended['SOLDIER']:.0f} "
-              f"archers={blended['ARCHER']:.0f} "
-              f"raiders={blended['RAIDER']:.0f} → counter={COUNTER[dominant]}")
     sorted_enemy = sorted(blended, key=lambda t: blended[t], reverse=True)
     priority = [COUNTER[t] for t in sorted_enemy]
     seen, result = set(), []
@@ -650,14 +635,16 @@ def assign_unit_roles(state, my_team, mode):
                 roles[(closest["x"], closest["y"])] = "finish"
                 assigned.add((closest["x"], closest["y"]))
 
-    # 3. MONUMENT: assign one unit per uncontrolled monument (reuse assign_monument_guards logic)
+    # 3. MONUMENT: assign 2 units to uncontrolled monuments, 1 to monuments we already hold
     for mon in sorted(monuments, key=lambda m: 0 if m.get("controlledBy") != my_team else 1):
-        available = [u for u in my_units if (u["x"], u["y"]) not in assigned]
-        if not available:
-            break
-        closest = min(available, key=lambda u: chebyshev(u["x"], u["y"], mon["x"], mon["y"]))
-        roles[(closest["x"], closest["y"])] = "monument"
-        assigned.add((closest["x"], closest["y"]))
+        slots = 2 if mon.get("controlledBy") != my_team else 1
+        for _ in range(slots):
+            available = [u for u in my_units if (u["x"], u["y"]) not in assigned]
+            if not available:
+                break
+            closest = min(available, key=lambda u: chebyshev(u["x"], u["y"], mon["x"], mon["y"]))
+            roles[(closest["x"], closest["y"])] = "monument"
+            assigned.add((closest["x"], closest["y"]))
 
     # 4. Remaining units get default roles by type
     for unit in my_units:
@@ -801,6 +788,12 @@ def best_move(unit, state, my_team, unit_positions, ex, W, danger: float = 0.0,
             else:
                 # ── ATTACK MODE ─────────────────────────────────────────────
                 score += (abs(ux - ex) - abs(tx - ex)) * w["w_forward"]
+
+                # Penalise hugging map edges — units cluster there when routing around water
+                if ty == 0 or ty == H - 1:
+                    score -= 4.0
+                if ty == 1 or ty == H - 2:
+                    score -= 2.0
 
                 if unit["type"] == "SOLDIER" and enemy_cities:
                     od = ec_dist.get((ux, uy), 999)
@@ -1093,8 +1086,6 @@ def generate_actions(state, my_team, turn=0):
 weights      = load_weights()
 best_weights = load_best_weights()
 history      = load_history()
-print(f"[learn] Loaded {len(history)} games of history")
-print(f"[learn] Current weights: {json.dumps({k: round(v,2) for k,v in weights.items()})}")
 
 # Per-game stats reset each game; recorded into history at GAME_OVER
 _game_stats = {"monument_turns": 0, "peak_territory": 0, "peak_cities": 0}
@@ -1119,7 +1110,6 @@ async def main():
 
                     if msg["type"] == "AUTH_SUCCESS":
                         team_id     = msg["teamId"]
-                        print(f"[bot] Team {team_id}")
                         _game_stats = {"monument_turns": 0, "peak_territory": 0, "peak_cities": 0}
                         # Reset composition tracker for new game
                         for k in _enemy_composition:
@@ -1183,10 +1173,7 @@ async def main():
 
                         wr      = win_rate(history, HISTORY_WINDOW)
                         fitness = compute_fitness(history, HISTORY_WINDOW)
-                        print(f"[bot] {outcome.upper()} (Δscore={score_delta:+.0f})  "
-                              f"win-rate={wr:.0%}  fitness={fitness:+.0f}  games={len(history)}  "
-                              f"mon_turns={_game_stats['monument_turns']}  "
-                              f"peak_terr={_game_stats['peak_territory']}")
+                        print(f"{outcome.upper()} Δ{score_delta:+.0f} wr={wr:.0%} games={len(history)}")
 
                         weights, best_weights = maybe_evolve(history, weights, best_weights)
 
