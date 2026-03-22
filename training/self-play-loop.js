@@ -25,7 +25,7 @@ const fs = require('fs');
 
 const args = process.argv.slice(2);
 const LARGE_MODEL = args.includes('--large');
-const positionalArgs = args.filter(a => !a.startsWith('--'));
+const positionalArgs = args.filter((a) => !a.startsWith('--'));
 const ITERATIONS = parseInt(positionalArgs[0]) || 3;
 const GAMES_PER_ITER = parseInt(positionalArgs[1]) || 50;
 const SIMS_PER_TURN = parseInt(positionalArgs[2]) || 500;
@@ -52,11 +52,12 @@ function runCommand(cmd, description) {
 
 function getLatestDataFiles(count) {
   if (!fs.existsSync(dataDir)) return [];
-  const files = fs.readdirSync(dataDir)
-    .filter(f => f.startsWith('mcts_nn_') && f.endsWith('.jsonl'))
+  const files = fs
+    .readdirSync(dataDir)
+    .filter((f) => f.startsWith('mcts_nn_') && f.endsWith('.jsonl'))
     .sort()
     .reverse();
-  return files.slice(0, count).map(f => path.join(dataDir, f));
+  return files.slice(0, count).map((f) => path.join(dataDir, f));
 }
 
 async function main() {
@@ -67,7 +68,9 @@ async function main() {
   console.log(`Games per iteration: ${GAMES_PER_ITER}`);
   console.log(`MCTS sims per turn: ${SIMS_PER_TURN}`);
   console.log(`Mode: ${MODE}`);
-  console.log(`Model: ${LARGE_MODEL ? 'LARGE (~1M params, 75 epochs)' : 'SMALL (~380K params, 30 epochs)'}\n`);
+  console.log(
+    `Model: ${LARGE_MODEL ? 'LARGE (~1M params, 75 epochs)' : 'SMALL (~380K params, 30 epochs)'}\n`
+  );
 
   const results = [];
 
@@ -91,7 +94,10 @@ async function main() {
       console.log(`  [NN-guided MCTS: using weights from iteration ${iter - 1}]`);
     }
 
-    const genSuccess = runCommand(generateCmd, `Step 1: Generate MCTS data (${GAMES_PER_ITER} games, ${SIMS_PER_TURN} sims/turn)`);
+    const genSuccess = runCommand(
+      generateCmd,
+      `Step 1: Generate MCTS data (${GAMES_PER_ITER} games, ${SIMS_PER_TURN} sims/turn)`
+    );
     if (!genSuccess) {
       console.error('Data generation failed. Stopping.');
       break;
@@ -107,10 +113,19 @@ async function main() {
 
     const epochs = LARGE_MODEL ? 75 : 30;
     const safeModelDir = modelDir.replace(/\\/g, '/');
-    const safeDataArgs = latestData.map(f => `"${f.replace(/\\/g, '/')}"`).join(' ');
+    const safeDataArgs = latestData.map((f) => `"${f.replace(/\\/g, '/')}"`).join(' ');
     const largeFlag = LARGE_MODEL ? ' --large' : '';
-    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --lr 0.0003 --output "${safeModelDir}"${largeFlag}`;
-    const trainSuccess = runCommand(trainCmd, `Step 2: Train NN on ${latestData.length} data files (${epochs} epochs)`);
+
+    // Fine-tune from previous weights (iteration 2+) instead of training from scratch
+    const ptFile = path.join(modelDir, 'civclash_agent.pt');
+    const resumeFlag =
+      iter > 1 && fs.existsSync(ptFile) ? ` --resume "${ptFile.replace(/\\/g, '/')}"` : '';
+
+    const trainCmd = `python train_nn.py ${safeDataArgs} --epochs ${epochs} --lr 0.0003 --output "${safeModelDir}"${largeFlag}${resumeFlag}`;
+    const trainSuccess = runCommand(
+      trainCmd,
+      `Step 2: Train NN on ${latestData.length} data files (${epochs} epochs)`
+    );
     if (!trainSuccess) {
       console.error('Training failed. Stopping.');
       break;
@@ -149,7 +164,9 @@ async function main() {
   }
 
   console.log(`\nFinal model: ${path.join(modelDir, 'civclash_agent_weights.json')}`);
-  console.log(`\nDeploy:\n  node agents/client.js nn 0 NNBot\n  node agents/client.js smarter 1 SmarterBot`);
+  console.log(
+    `\nDeploy:\n  node agents/client.js nn 0 NNBot\n  node agents/client.js smarter 1 SmarterBot`
+  );
   const nextIter = ITERATIONS + 3;
   console.log(`\nTo continue training:`);
   console.log(`  node self-play-loop.js ${nextIter} ${GAMES_PER_ITER} ${SIMS_PER_TURN}`);

@@ -180,7 +180,15 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
     model = model.to(device)
 
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=10, factor=0.5)
+
+    # Cosine annealing with linear warmup — better than ReduceLROnPlateau
+    warmup_epochs = min(3, epochs // 4)
+    def lr_lambda(epoch):
+        if epoch < warmup_epochs:
+            return (epoch + 1) / warmup_epochs  # linear warmup
+        progress = (epoch - warmup_epochs) / max(1, epochs - warmup_epochs)
+        return 0.5 * (1 + np.cos(np.pi * progress))  # cosine decay
+    scheduler = optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     # ignore_index=-1: skip padding slots (empty unit/city positions)
     # This is the key fix — without it, 72% of move targets and 81% of build
@@ -310,7 +318,7 @@ def train(model, train_loader, val_loader, epochs, lr, device, save_path):
         move_acc = move_correct / max(total_move, 1)
         avg_value_mae = value_mae / max(total_build // MAX_CITIES, 1)
 
-        scheduler.step(avg_val_loss)
+        scheduler.step()
 
         if (epoch + 1) % 5 == 0 or epoch == 0:
             print(
@@ -381,6 +389,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--output", default="models", help="Output directory")
     parser.add_argument("--large", action="store_true", help="Use 1M+ param model (for GPU)")
+    parser.add_argument("--resume", default=None, help="Path to .pt checkpoint to resume from (fine-tune)")
     args = parser.parse_args()
 
     files = []
@@ -413,10 +422,24 @@ def main():
     input_dim = dataset.features.shape[1]
     model = CivClashNet(input_dim=input_dim, large=args.large)
     param_count = sum(p.numel() for p in model.parameters())
-    print(f"Model parameters: {param_count:,}\n")
+    print(f"Model parameters: {param_count:,}")
 
+    # Resume from checkpoint (fine-tune instead of training from scratch)
+    lr = args.lr
+    epochs = args.epochs
     pt_path = os.path.join(args.output, "civclash_agent.pt")
-    model = train(model, train_loader, val_loader, args.epochs, args.lr, device, pt_path)
+
+    if args.resume and os.path.exists(args.resume):
+        print(f"Resuming from {args.resume} (fine-tune mode)")
+        model.load_state_dict(torch.load(args.resume, weights_only=True, map_location=device))
+        lr = args.lr * 0.3  # gentler LR for fine-tuning
+        epochs = max(10, args.epochs // 2)  # fewer epochs needed
+        print(f"  Fine-tune LR: {lr:.6f}, epochs: {epochs}")
+    elif args.resume:
+        print(f"Resume path {args.resume} not found — training from scratch")
+
+    print()
+    model = train(model, train_loader, val_loader, epochs, lr, device, pt_path)
 
     onnx_path = os.path.join(args.output, "civclash_agent.onnx")
     json_path = os.path.join(args.output, "civclash_agent_weights.json")
